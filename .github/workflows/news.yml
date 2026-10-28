@@ -1,0 +1,70 @@
+name: Farol · atualizar notícias
+
+on:
+  schedule:
+    # A cada 15 minutos — mesmo intervalo típico de apps de notícias.
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: farol-pages
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Restaurar arquivo de notícias
+        uses: actions/cache/restore@v4
+        with:
+          path: .cache/news-archive.json
+          key: farol-news-${{ github.run_id }}
+          restore-keys: |
+            farol-news-
+
+      - name: Agregar feeds
+        run: node aggregator/index.mjs --out dist
+
+      - name: Salvar arquivo de notícias
+        continue-on-error: true
+        uses: actions/cache/save@v4
+        with:
+          path: .cache/news-archive.json
+          key: farol-news-${{ github.run_id }}
+
+      - name: Configurar Pages
+        uses: actions/configure-pages@v5
+
+      - name: Empacotar site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: snapshot
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

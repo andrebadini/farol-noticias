@@ -1,0 +1,299 @@
+/**
+ * Farol Notícias — catálogo de fontes.
+ *
+ * Cada fonte tem um feed RSS/Atom público. O agregador roda no GitHub Actions
+ * a cada 15 minutos, normaliza tudo e publica JSON estático no GitHub Pages
+ * (que responde com `Access-Control-Allow-Origin: *`, necessário porque o
+ * WebView do Even Hub aplica CORS de navegador).
+ *
+ * `tag` é editorial e curta: ajuda o leitor a montar uma dieta de informação
+ * variada sem precisar de rótulos políticos.
+ */
+export const SOURCES = [
+  {
+    id: 'g1',
+    name: 'G1',
+    short: 'G1',
+    domain: 'g1.globo.com',
+    feed: 'https://g1.globo.com/rss/g1/',
+    color: '#D6321F',
+    kind: 'Portal',
+    tag: 'Notícias 24h',
+  },
+  {
+    id: 'valor',
+    name: 'Valor Econômico',
+    short: 'Valor',
+    domain: 'valor.globo.com',
+    feed: 'https://valor.globo.com/rss/valor/',
+    color: '#14365D',
+    kind: 'Jornal',
+    tag: 'Economia',
+  },
+  {
+    id: 'infomoney',
+    name: 'InfoMoney',
+    short: 'IM',
+    domain: 'infomoney.com.br',
+    feed: 'https://www.infomoney.com.br/feed/',
+    color: '#1449D6',
+    kind: 'Portal',
+    tag: 'Mercados',
+  },
+  {
+    id: 'folha',
+    name: 'Folha de S.Paulo',
+    short: 'Folha',
+    domain: 'folha.uol.com.br',
+    feed: 'https://feeds.folha.uol.com.br/emcimadahora/rss091.xml',
+    color: '#111111',
+    kind: 'Jornal',
+    tag: 'Grande imprensa',
+  },
+  {
+    id: 'uol',
+    name: 'UOL Notícias',
+    short: 'UOL',
+    domain: 'uol.com.br',
+    feed: 'https://rss.uol.com.br/feed/noticias.xml',
+    color: '#D99A00',
+    kind: 'Portal',
+    tag: 'Notícias 24h',
+  },
+  {
+    id: 'oantagonista',
+    name: 'O Antagonista',
+    short: 'OA',
+    domain: 'oantagonista.com.br',
+    feed: 'https://oantagonista.com.br/feed/',
+    color: '#8E1B1B',
+    kind: 'Revista',
+    tag: 'Política',
+  },
+  {
+    id: 'crusoe',
+    name: 'Crusoé',
+    short: 'Crusoé',
+    domain: 'crusoe.com.br',
+    feed: 'https://crusoe.com.br/feed/',
+    color: '#6E4B2A',
+    kind: 'Revista',
+    tag: 'Investigação',
+  },
+  {
+    id: 'intercept',
+    name: 'Intercept Brasil',
+    short: 'Intercept',
+    domain: 'intercept.com.br',
+    feed: 'https://www.intercept.com.br/feed/',
+    color: '#D71920',
+    kind: 'Revista',
+    tag: 'Investigação',
+  },
+  {
+    id: 'poder360',
+    name: 'Poder360',
+    short: 'P360',
+    domain: 'poder360.com.br',
+    feed: 'https://www.poder360.com.br/feed/',
+    color: '#0C6B4F',
+    kind: 'Portal',
+    tag: 'Brasília',
+  },
+  {
+    id: 'metropoles',
+    name: 'Metrópoles',
+    short: 'Metrópoles',
+    domain: 'metropoles.com',
+    feed: 'https://www.metropoles.com/feed',
+    color: '#0B4EA2',
+    kind: 'Portal',
+    tag: 'Cidades',
+  },
+  {
+    id: 'agenciabrasil',
+    name: 'Agência Brasil',
+    short: 'ABr',
+    domain: 'agenciabrasil.ebc.com.br',
+    feed: 'https://agenciabrasil.ebc.com.br/rss/ultimasnoticias/feed.xml',
+    color: '#1351B4',
+    kind: 'Agência',
+    tag: 'Serviço público',
+  },
+  {
+    id: 'brasildefato',
+    name: 'Brasil de Fato',
+    short: 'BdF',
+    domain: 'brasildefato.com.br',
+    feed: 'https://www.brasildefato.com.br/feed/',
+    color: '#C8102E',
+    kind: 'Jornal',
+    tag: 'Movimentos',
+  },
+  {
+    id: 'veja',
+    name: 'Veja',
+    short: 'Veja',
+    domain: 'veja.abril.com.br',
+    feed: 'https://veja.abril.com.br/feed/',
+    color: '#0057B8',
+    kind: 'Revista',
+    tag: 'Grande imprensa',
+  },
+  {
+    id: 'exame',
+    name: 'Exame',
+    short: 'Exame',
+    domain: 'exame.com',
+    feed: 'https://exame.com/feed/',
+    color: '#E30613',
+    kind: 'Revista',
+    tag: 'Negócios',
+  },
+  {
+    id: 'cnnbrasil',
+    name: 'CNN Brasil',
+    short: 'CNN',
+    domain: 'cnnbrasil.com.br',
+    feed: 'https://admin.cnnbrasil.com.br/feed/',
+    color: '#CC0000',
+    kind: 'Portal',
+    tag: 'Notícias 24h',
+  },
+  {
+    id: 'jovempan',
+    name: 'Jovem Pan',
+    short: 'JP',
+    domain: 'jovempan.com.br',
+    feed: 'https://jovempan.com.br/feed/',
+    color: '#003DA5',
+    kind: 'Portal',
+    tag: 'Rádio',
+  },
+  {
+    id: 'nexo',
+    name: 'Nexo Jornal',
+    short: 'Nexo',
+    domain: 'nexojornal.com.br',
+    feed: 'https://www.nexojornal.com.br/rss.xml',
+    color: '#1A1A1A',
+    kind: 'Jornal',
+    tag: 'Contexto',
+  },
+  {
+    id: 'aosfatos',
+    name: 'Aos Fatos',
+    short: 'AosFatos',
+    domain: 'aosfatos.org',
+    feed: 'https://www.aosfatos.org/noticias/feed/',
+    color: '#B58A1B',
+    kind: 'Agência',
+    tag: 'Checagem',
+  },
+  {
+    id: 'ponte',
+    name: 'Ponte Jornalismo',
+    short: 'Ponte',
+    domain: 'ponte.org',
+    feed: 'https://ponte.org/feed/',
+    color: '#6A1B9A',
+    kind: 'Revista',
+    tag: 'Direitos',
+  },
+  {
+    id: 'almapreta',
+    name: 'Alma Preta',
+    short: 'AP',
+    domain: 'almapreta.com.br',
+    feed: 'https://almapreta.com.br/feed/',
+    color: '#8A6420',
+    kind: 'Portal',
+    tag: 'Diversidade',
+  },
+  {
+    id: 'brasil247',
+    name: 'Brasil 247',
+    short: '247',
+    domain: 'brasil247.com',
+    feed: 'https://www.brasil247.com/feed/',
+    color: '#C4161C',
+    kind: 'Portal',
+    tag: 'Política',
+  },
+  {
+    id: 'forum',
+    name: 'Revista Fórum',
+    short: 'Fórum',
+    domain: 'revistaforum.com.br',
+    feed: 'https://revistaforum.com.br/feed/',
+    color: '#E4572E',
+    kind: 'Revista',
+    tag: 'Debate',
+  },
+  {
+    id: 'dcm',
+    name: 'Diário do Centro do Mundo',
+    short: 'DCM',
+    domain: 'diariodocentrodomundo.com.br',
+    feed: 'https://www.diariodocentrodomundo.com.br/feed/',
+    color: '#2D6A4F',
+    kind: 'Portal',
+    tag: 'Debate',
+  },
+]
+
+export const CATEGORIES = [
+  { id: 'politica', name: 'Política', emoji: '◉' },
+  { id: 'economia', name: 'Economia', emoji: '▲' },
+  { id: 'mundo', name: 'Mundo', emoji: '◎' },
+  { id: 'esportes', name: 'Esportes', emoji: '●' },
+  { id: 'tecnologia', name: 'Tecnologia', emoji: '◆' },
+  { id: 'cultura', name: 'Cultura', emoji: '✳' },
+  { id: 'cidades', name: 'Cidades', emoji: '▣' },
+  { id: 'saude', name: 'Saúde', emoji: '✚' },
+  { id: 'ciencia', name: 'Ciência', emoji: '✧' },
+  { id: 'justica', name: 'Justiça', emoji: '§' },
+  { id: 'geral', name: 'Geral', emoji: '•' },
+]
+
+/**
+ * Palavras-chave por categoria. A pontuação é feita no título (peso 3) e no
+ * resumo (peso 1). Mantemos acentos e também a versão sem acento para casar
+ * com o texto normalizado.
+ */
+export const KEYWORDS = {
+  politica: [
+    'lula','bolsonaro','governo','congresso','senado','câmara','stf','supremo','ministro','eleição','eleições','eleitoral','pt','pl','psol','pcdob','união','tse','deputado','senador','presidente','palácio','planalto','tcu','política','político','partido','cpi','reforma','veto','medida provisória','mdb','pp','republicanos','novo','solidariedade','gleisi','tarcísio','zema','caiado','ratos','flávio','eduardo bolsonaro','michelle','janja','haddad','galípolo','gleisi hoffmann',
+  ],
+  economia: [
+    'economia','econômico','dólar','real','ibovespa','bolsa','inflação','ipca','juros','selic','banco central','mercado','empresa','empresas','lucro','receita','pib','desemprego','renda','credor','investidor','petróleo','commodities','varejo','indústria','comércio','orçamento','imposto','tributário','reforma tributária','bitcoin','cripto','neymar','banco','crédito','dívida','tarifa','tarifaço','score','cartão','consignado','financiamento','shopping','construtora','keeta','jpmorgan',
+  ],
+  mundo: [
+    'eua','estados unidos','trump','china','europa','união europeia','ucrânia','rússia','putin','israel','gaza','irá','oriente médio','onu','venezuela','maduro','argentina','milei','méxico','canadá','japão','índia','áfrica','guerra','internacional','exterior','acordo','global','otan','frança','alemanha','reino unido','lula e trump','tarifas',
+  ],
+  esportes: [
+    'futebol','seleção','brasileirão','copa','campeonato','flamengo','palmeiras','corinthians','são paulo','santos','grêmio','inter','cruzeiro','atlético','botafogo','fluminense','vasco','neymar','messi','cristiano ronaldo','olimpíadas','olimpíada','nba','nfl','f1','fórmula 1','vôlei','volêi','basquete','tênis','atletismo','gol','jogador','técnico','estádio','clube','libertadores','sul-americana','mundial','boxe','mma','surfe','ciclismo',
+  ],
+  tecnologia: [
+    'tecnologia','inteligência artificial','ia','chatgpt','openai','google','apple','microsoft','meta','whatsapp','instagram','tiktok','x','twitter','starlink','internet','5g','chip','software','app','aplicativo','startup','startups','ciberataque','hacker','robô','robótica','satélite','spacex','elon musk','semiconductor','semicondutor','dados','privacidade','deepfake','algoritmo','plataforma',
+  ],
+  cultura: [
+    'cultura','filme','cinema','série','novela','música','show','festival','teatro','livro','literatura','arte','exposição','museu','cantor','cantora','ator','atriz','diretor','grammy','oscar','big brother','bbb','netflix','streaming','podcast','moda','gastronomia','prêmio','anitta','rock in rio','lollapalooza',
+  ],
+  cidades: [
+    'cidade','cidades','metrô','ônibus','trânsito','mobilidade','prefeitura','prefeito','governador','chuva','enchente','alagamento','deslizamento','violência','crime','polícia','homicídio','assalto','roubo','operação','tráfico','bairro','zona','avenida','rua','sp','são paulo','rio','minas','bahia','pernambuco','brasília','curitiba','porto alegre','salvador','fortaleza','recife','manaus','belém','goiânia',
+  ],
+  saude: [
+    'saúde','doença','vacina','dengue','covid','gripe','câncer','hospital','sus','médico','medicamento','remédio','anvisa','pandemia','obesidade','diabetes','saúde mental','depressão','autismo','caneta emagrecedora','semaglutida','ozempic','atendimento','leito',
+  ],
+  ciencia: [
+    'ciência','cientistas','pesquisa','estudo','descoberta','nasa','espaço','telescópio','planeta','clima','aquecimento global','meio ambiente','amazônia','desmatamento','biodiversidade','espécie','fóssil','arqueologia','oceano','asteroide','lua','marte','poluição','reciclagem','sustentável',
+  ],
+  justica: [
+    'justiça','stf','tribunal','juiz','juíza','ministro','sentença','condenado','condenação','réu','crime','julgamento','inquérito','polícia federal','pf','mp','ministério público','prisão','preso','habeas corpus','denúncia','processo','ação penal','moro','dallagnol','arbitragem','violência doméstica','feminicídio',
+  ],
+}
+
+export const STOPWORDS = new Set(
+  'a o as os um uma uns umas de do da dos das em no na nos nas por para com sem sobre entre e ou mas que se ao aos à às é são foi serão será tem têm há pelo pela pelos pelas como mais menos muito pouco já não sim também ainda após antes até desde quando onde qual quais quem cujo cuja seus suas seu sua este esta esse essa isso aquilo'.split(' '),
+)
