@@ -12,6 +12,7 @@
 export const SOURCES = [
   {
     id: 'g1',
+    monogram: 'G1',
     name: 'G1',
     short: 'G1',
     domain: 'g1.globo.com',
@@ -22,6 +23,7 @@ export const SOURCES = [
   },
   {
     id: 'valor',
+    monogram: 'VE',
     name: 'Valor Econômico',
     short: 'Valor',
     domain: 'valor.globo.com',
@@ -32,6 +34,7 @@ export const SOURCES = [
   },
   {
     id: 'infomoney',
+    monogram: 'IM',
     name: 'InfoMoney',
     short: 'IM',
     domain: 'infomoney.com.br',
@@ -42,6 +45,7 @@ export const SOURCES = [
   },
   {
     id: 'folha',
+    monogram: 'FSP',
     name: 'Folha de S.Paulo',
     short: 'Folha',
     domain: 'folha.uol.com.br',
@@ -52,6 +56,7 @@ export const SOURCES = [
   },
   {
     id: 'uol',
+    monogram: 'UOL',
     name: 'UOL Notícias',
     short: 'UOL',
     domain: 'uol.com.br',
@@ -62,6 +67,7 @@ export const SOURCES = [
   },
   {
     id: 'oantagonista',
+    monogram: 'OA',
     name: 'O Antagonista',
     short: 'OA',
     domain: 'oantagonista.com.br',
@@ -72,6 +78,7 @@ export const SOURCES = [
   },
   {
     id: 'crusoe',
+    monogram: 'CR',
     name: 'Crusoé',
     short: 'Crusoé',
     domain: 'crusoe.com.br',
@@ -82,6 +89,7 @@ export const SOURCES = [
   },
   {
     id: 'intercept',
+    monogram: 'IB',
     name: 'Intercept Brasil',
     short: 'Intercept',
     domain: 'intercept.com.br',
@@ -92,6 +100,7 @@ export const SOURCES = [
   },
   {
     id: 'poder360',
+    monogram: 'P36',
     name: 'Poder360',
     short: 'P360',
     domain: 'poder360.com.br',
@@ -102,6 +111,7 @@ export const SOURCES = [
   },
   {
     id: 'metropoles',
+    monogram: 'MT',
     name: 'Metrópoles',
     short: 'Metrópoles',
     domain: 'metropoles.com',
@@ -112,6 +122,7 @@ export const SOURCES = [
   },
   {
     id: 'agenciabrasil',
+    monogram: 'ABr',
     name: 'Agência Brasil',
     short: 'ABr',
     domain: 'agenciabrasil.ebc.com.br',
@@ -122,6 +133,7 @@ export const SOURCES = [
   },
   {
     id: 'brasildefato',
+    monogram: 'BdF',
     name: 'Brasil de Fato',
     short: 'BdF',
     domain: 'brasildefato.com.br',
@@ -132,6 +144,7 @@ export const SOURCES = [
   },
   {
     id: 'veja',
+    monogram: 'VJ',
     name: 'Veja',
     short: 'Veja',
     domain: 'veja.abril.com.br',
@@ -142,6 +155,7 @@ export const SOURCES = [
   },
   {
     id: 'exame',
+    monogram: 'EX',
     name: 'Exame',
     short: 'Exame',
     domain: 'exame.com',
@@ -152,6 +166,7 @@ export const SOURCES = [
   },
   {
     id: 'cnnbrasil',
+    monogram: 'CNN',
     name: 'CNN Brasil',
     short: 'CNN',
     domain: 'cnnbrasil.com.br',
@@ -162,6 +177,7 @@ export const SOURCES = [
   },
   {
     id: 'jovempan',
+    monogram: 'JP',
     name: 'Jovem Pan',
     short: 'JP',
     domain: 'jovempan.com.br',
@@ -172,6 +188,7 @@ export const SOURCES = [
   },
   {
     id: 'nexo',
+    monogram: 'NX',
     name: 'Nexo Jornal',
     short: 'Nexo',
     domain: 'nexojornal.com.br',
@@ -182,6 +199,7 @@ export const SOURCES = [
   },
   {
     id: 'aosfatos',
+    monogram: 'AF',
     name: 'Aos Fatos',
     short: 'AosFatos',
     domain: 'aosfatos.org',
@@ -192,6 +210,7 @@ export const SOURCES = [
   },
   {
     id: 'ponte',
+    monogram: 'PT',
     name: 'Ponte Jornalismo',
     short: 'Ponte',
     domain: 'ponte.org',
@@ -202,6 +221,7 @@ export const SOURCES = [
   },
   {
     id: 'almapreta',
+    monogram: 'AP',
     name: 'Alma Preta',
     short: 'AP',
     domain: 'almapreta.com.br',
@@ -212,6 +232,7 @@ export const SOURCES = [
   },
   {
     id: 'brasil247',
+    monogram: '247',
     name: 'Brasil 247',
     short: '247',
     domain: 'brasil247.com',
@@ -222,6 +243,7 @@ export const SOURCES = [
   },
   {
     id: 'forum',
+    monogram: 'FR',
     name: 'Revista Fórum',
     short: 'Fórum',
     domain: 'revistaforum.com.br',
@@ -232,6 +254,7 @@ export const SOURCES = [
   },
   {
     id: 'dcm',
+    monogram: 'DCM',
     name: 'Diário do Centro do Mundo',
     short: 'DCM',
     domain: 'diariodocentrodomundo.com.br',

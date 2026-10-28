@@ -1,122 +1,715 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import type {
+  ArticleFull,
+  ArticleMeta,
+  CategoryId,
+  LatestPayload,
+  LoadOrigin,
+  SavedIndexEntry,
+  Settings,
+  TabId,
+} from './types'
+import { FALLBACK_SOURCES, CATEGORY_META } from './data/meta'
+import {
+  clearFarolCache,
+  DEFAULT_SETTINGS,
+  kvGet,
+  kvSet,
+  loadBookmark,
+  loadBookmarkIndex,
+  loadSettings,
+  removeBookmark,
+  saveBookmark,
+  saveSettings,
+} from './lib/storage'
+import { fetchArticle, fetchLatest } from './lib/api'
+import { GlassesUI, type GlassesSnapshot, type GlassesStatus } from './lib/glasses'
+import { generatedLabel } from './lib/time'
+import { Header } from './components/Header'
+import { Ticker } from './components/Ticker'
+import { FilterBar } from './components/FilterBar'
+import { Hero } from './components/Hero'
+import { Feed } from './components/Feed'
+import { SourceRail } from './components/SourceRail'
+import { BottomNav } from './components/BottomNav'
+import { Reader } from './components/Reader'
+import { SearchView } from './components/SearchView'
+import { SavedView } from './components/SavedView'
+import { SettingsView } from './components/SettingsView'
+import { SourceSheet } from './components/SourceSheet'
+import { Toast, type ToastMessage } from './components/Toast'
+import { TipCard } from './components/TipCard'
+import { BootSplash, FeedSkeleton } from './components/Boot'
+import { EmptyArt } from './components/Art'
+import { RefreshIcon, WifiOffIcon } from './components/Icons'
 
-function App() {
-  const [count, setCount] = useState(0)
+const RECENT_KEY = 'farol:recent-searches'
+const SESSION_KEY = 'farol:v3:gsession'
 
-  return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+function readRecent(): string[] {
+  try {
+    const raw = window.localStorage.getItem(RECENT_KEY)
+    const parsed = raw ? JSON.parse(raw) : []
+    return Array.isArray(parsed) ? parsed.filter((item) => typeof item === 'string').slice(0, 6) : []
+  } catch {
+    return []
+  }
 }
 
-export default App
+const HERO_CATEGORIES = new Set(['politica', 'economia', 'mundo', 'justica', 'cidades', 'ciencia', 'saude'])
+const LOW_SIGNAL = /(lotof[aá]cil|quina|mega-sena|lotomania|sorteio|resultado do|hor[oó]scopo|bbb|celebridade|fofoca)/i
+
+/** Escolhe a manchete do topo: relevância editorial acima da rajada do feed. */
+function pickHero(articles: ArticleMeta[]): ArticleMeta | null {
+  const candidates = articles.slice(0, 40)
+  if (!candidates.length) return null
+  let best = candidates[0]
+  let bestScore = Number.NEGATIVE_INFINITY
+  for (const article of candidates) {
+    let score = 0
+    if (HERO_CATEGORIES.has(article.category)) score += 3
+    if (article.category === 'geral') score += 1
+    if (article.full) score += 1.2
+    score += Math.min(2, article.readingMin * 0.25)
+    if (LOW_SIGNAL.test(article.title)) score -= 6
+    const ageHours = Math.max(0, (Date.now() - Date.parse(article.publishedAt)) / 3_600_000)
+    score -= ageHours * 0.12
+    if (score > bestScore) {
+      best = article
+      bestScore = score
+    }
+  }
+  return best
+}
+
+interface ReaderState {
+  meta: ArticleMeta
+  article: ArticleFull | null
+  loading: boolean
+}
+
+export default function App() {
+  const bootStart = useRef(Date.now())
+  const [latest, setLatest] = useState<LatestPayload | null>(null)
+  const [origin, setOrigin] = useState<LoadOrigin>({ kind: 'none', at: 0 })
+  const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
+  const [saved, setSaved] = useState<SavedIndexEntry[]>([])
+  const [tab, setTab] = useState<TabId>('agora')
+  const [category, setCategory] = useState<CategoryId | 'tudo'>('tudo')
+  const [sourceFilter, setSourceFilter] = useState<string | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [recent, setRecent] = useState<string[]>([])
+  const [reader, setReader] = useState<ReaderState | null>(null)
+  const [sheetOpen, setSheetOpen] = useState(false)
+  const [toast, setToast] = useState<ToastMessage | null>(null)
+  const [glassesStatus, setGlassesStatus] = useState<GlassesStatus>({ state: 'connecting' })
+  const [booting, setBooting] = useState(true)
+  const [splashLeaving, setSplashLeaving] = useState(false)
+  const [restored, setRestored] = useState(false)
+
+  const latestRef = useRef<LatestPayload | null>(null)
+  const settingsRef = useRef(settings)
+  const savedRef = useRef(saved)
+  const filterRef = useRef(sourceFilter)
+  const feedRef = useRef<ArticleMeta[]>([])
+  const sourcesRef = useRef(FALLBACK_SOURCES)
+  const refreshRef = useRef<(manual?: boolean) => Promise<void>>(async () => undefined)
+  const toggleSaveRef = useRef<(article: ArticleMeta) => Promise<boolean>>(async () => false)
+  const glassesRef = useRef<GlassesUI | null>(null)
+  const sessionTimer = useRef<number | null>(null)
+
+  const showToast = useCallback((text: string, tone: ToastMessage['tone'] = 'default') => {
+    setToast({ id: Date.now() + Math.random(), text, tone })
+  }, [])
+  const dismissToast = useCallback(() => setToast(null), [])
+
+  const sources = useMemo(() => {
+    const list = latest?.sources?.length ? latest.sources : FALLBACK_SOURCES
+    return list
+  }, [latest])
+
+  const sourceMap = useMemo(() => new Map(sources.map((source) => [source.id, source])), [sources])
+
+  const enabledSet = useMemo(() => {
+    if (settings.enabledSources === null) return new Set(sources.map((source) => source.id))
+    return new Set(settings.enabledSources)
+  }, [settings.enabledSources, sources])
+
+  const baseArticles = useMemo(() => {
+    const articles = latest?.articles ?? []
+    return articles.filter(
+      (article) => enabledSet.has(article.sourceId) && (!sourceFilter || article.sourceId === sourceFilter),
+    )
+  }, [latest, enabledSet, sourceFilter])
+
+  const categoryCounts = useMemo(() => {
+    const counts = new Map<CategoryId | 'tudo', number>()
+    counts.set('tudo', baseArticles.length)
+    for (const article of baseArticles) {
+      counts.set(article.category, (counts.get(article.category) ?? 0) + 1)
+    }
+    return counts
+  }, [baseArticles])
+
+  const feed = useMemo(
+    () => (category === 'tudo' ? baseArticles : baseArticles.filter((article) => article.category === category)),
+    [baseArticles, category],
+  )
+
+  const savedIds = useMemo(() => new Set(saved.map((entry) => entry.id)), [saved])
+  const online = sources.filter((source) => source.ok).length
+  const enabledCount = enabledSet.size
+  const hasFilters =
+    category !== 'tudo' ||
+    sourceFilter !== null ||
+    (settings.enabledSources !== null && settings.enabledSources.length < sources.length)
+  const sourceName = sourceFilter ? (sourceMap.get(sourceFilter)?.name ?? sourceFilter) : null
+
+  feedRef.current = feed
+  sourcesRef.current = sources
+  savedRef.current = saved
+  filterRef.current = sourceFilter
+  settingsRef.current = settings
+
+  const updateSettings = useCallback((patch: Partial<Settings>) => {
+    setSettings((previous) => {
+      const next = { ...previous, ...patch }
+      settingsRef.current = next
+      void saveSettings(next)
+      return next
+    })
+  }, [])
+
+  const refresh = useCallback(
+    async (manual = false) => {
+      if (manual) setRefreshing(true)
+      try {
+        const before = latestRef.current
+        const result = await fetchLatest(manual)
+        latestRef.current = result.payload
+        setLatest(result.payload)
+        setOrigin(result.origin)
+        if (manual) {
+          if (result.origin.kind === 'none') {
+            showToast('Sem conexão. Mostrando o que já está salvo.')
+          } else {
+            const diff = before ? result.payload.total - before.total : 0
+            showToast(
+              diff > 0 ? `${diff} ${diff === 1 ? 'matéria nova' : 'matérias novas'} na edição` : 'Edição já está atualizada',
+              diff > 0 ? 'accent' : 'default',
+            )
+          }
+        }
+      } catch {
+        if (manual) showToast('Não foi possível atualizar agora. Tente de novo.')
+      } finally {
+        if (manual) setRefreshing(false)
+      }
+    },
+    [showToast],
+  )
+  refreshRef.current = refresh
+
+  const toggleSave = useCallback(
+    async (article: ArticleMeta): Promise<boolean> => {
+      const current = savedRef.current
+      const existing = current.find((entry) => entry.id === article.id)
+      if (existing) {
+        await removeBookmark(article.id)
+        const next = current.filter((entry) => entry.id !== article.id)
+        savedRef.current = next
+        setSaved(next)
+        showToast('Removido dos salvos')
+        return false
+      }
+      const full = await fetchArticle(article)
+      const content = full?.content?.trim() || article.summary || ''
+      const entry: SavedIndexEntry = { ...article, savedAt: Date.now() }
+      await saveBookmark(entry, content)
+      const next = [entry, ...savedRef.current.filter((item) => item.id !== article.id)]
+      savedRef.current = next
+      setSaved(next)
+      showToast('Salvo no seu celular', 'accent')
+      return true
+    },
+    [showToast],
+  )
+  toggleSaveRef.current = toggleSave
+
+  const openArticle = useCallback(async (meta: ArticleMeta) => {
+    setReader({ meta, article: null, loading: true })
+    const isSaved = savedRef.current.some((entry) => entry.id === meta.id)
+    if (isSaved) {
+      const offlineCopy = await loadBookmark(meta.id)
+      if (offlineCopy) {
+        setReader({ meta, article: offlineCopy, loading: false })
+        void fetchArticle(meta).then((full) => {
+          if (full?.content) {
+            setReader((current) =>
+              current && current.meta.id === meta.id ? { ...current, article: full, loading: false } : current,
+            )
+          }
+        })
+        return
+      }
+    }
+    const full = await fetchArticle(meta)
+    setReader((current) => (current && current.meta.id === meta.id ? { meta, article: full, loading: false } : current))
+  }, [])
+
+  const closeReader = useCallback(() => setReader(null), [])
+
+  const sendToGlasses = useCallback(
+    async (meta: ArticleMeta) => {
+      if (glassesStatus.state !== 'ready' || !glassesRef.current) {
+        showToast('Abra o Farol no Even Hub com os óculos G2 conectados.')
+        return
+      }
+      const full = (await fetchArticle(meta)) ?? { ...meta, content: meta.summary }
+      await glassesRef.current.showArticle(full)
+      showToast('No visor: matéria aberta', 'accent')
+    },
+    [glassesStatus.state, showToast],
+  )
+
+  const toggleSource = useCallback(
+    (id: string) => {
+      const allIds = sources.map((source) => source.id)
+      const current = settingsRef.current.enabledSources ?? allIds
+      const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
+      if (next.length === 0) {
+        showToast('Mantenha pelo menos uma fonte ativa.')
+        return
+      }
+      updateSettings({ enabledSources: next.length === allIds.length ? null : next })
+    },
+    [sources, showToast, updateSettings],
+  )
+
+  const resetFilters = useCallback(() => {
+    setCategory('tudo')
+    setSourceFilter(null)
+    updateSettings({ enabledSources: null })
+  }, [updateSettings])
+
+  const rememberSearch = useCallback((term: string) => {
+    const clean = term.trim()
+    if (clean.length < 2) return
+    setRecent((previous) => {
+      const next = [clean, ...previous.filter((item) => item.toLowerCase() !== clean.toLowerCase())].slice(0, 6)
+      try {
+        window.localStorage.setItem(RECENT_KEY, JSON.stringify(next))
+      } catch {
+        /* ignore */
+      }
+      return next
+    })
+  }, [])
+
+  const clearRecent = useCallback(() => {
+    setRecent([])
+    try {
+      window.localStorage.removeItem(RECENT_KEY)
+    } catch {
+      /* ignore */
+    }
+  }, [])
+
+  const changeTab = useCallback((next: TabId) => {
+    setTab(next)
+    requestAnimationFrame(() => window.scrollTo({ top: 0 }))
+  }, [])
+
+  const persistSession = useCallback((snapshot: GlassesSnapshot) => {
+    if (sessionTimer.current) window.clearTimeout(sessionTimer.current)
+    sessionTimer.current = window.setTimeout(() => {
+      void kvSet(SESSION_KEY, JSON.stringify(snapshot))
+    }, 500)
+  }, [])
+
+  /* boot ---------------------------------------------------------------- */
+  useEffect(() => {
+    let alive = true
+    ;(async () => {
+      const [loadedSettings, bookmarks, result, recentSearches] = await Promise.all([
+        loadSettings(),
+        loadBookmarkIndex(),
+        fetchLatest(false),
+        Promise.resolve(readRecent()),
+      ])
+      if (!alive) return
+      setSettings(loadedSettings)
+      settingsRef.current = loadedSettings
+      setSaved(bookmarks)
+      savedRef.current = bookmarks
+      setLatest(result.payload)
+      latestRef.current = result.payload
+      setOrigin(result.origin)
+      setRecent(recentSearches)
+      setLoading(false)
+      const wait = Math.max(0, 900 - (Date.now() - bootStart.current))
+      window.setTimeout(() => {
+        if (!alive) return
+        setSplashLeaving(true)
+        window.setTimeout(() => alive && setBooting(false), 430)
+      }, wait)
+    })().catch(() => {
+      if (!alive) return
+      setLoading(false)
+      setSplashLeaving(true)
+      window.setTimeout(() => alive && setBooting(false), 430)
+    })
+    return () => {
+      alive = false
+    }
+  }, [])
+
+  /* glasses ------------------------------------------------------------- */
+  useEffect(() => {
+    const ui = new GlassesUI({
+      getFeed: () => feedRef.current,
+      getSources: () => sourcesRef.current,
+      getSaved: () => savedRef.current,
+      getFilter: () => filterRef.current,
+      setFilter: (id) => {
+        setSourceFilter(id)
+        if (id) setCategory('tudo')
+      },
+      loadArticle: (meta) => fetchArticle(meta),
+      toggleSave: (meta) => toggleSaveRef.current(meta),
+      refresh: async () => {
+        await refreshRef.current(false)
+      },
+      onStatus: (status) => setGlassesStatus(status),
+      onSession: (snapshot) => persistSession(snapshot),
+    })
+    glassesRef.current = ui
+    void ui.init()
+    return () => {
+      ui.destroy()
+      glassesRef.current = null
+    }
+  }, [persistSession])
+
+  useEffect(() => {
+    glassesRef.current?.setData(feed, sources, saved, sourceFilter)
+  }, [feed, sources, saved, sourceFilter])
+
+  useEffect(() => {
+    if (restored || glassesStatus.state !== 'ready' || !latest) return
+    setRestored(true)
+    void (async () => {
+      try {
+        const raw = await kvGet(SESSION_KEY)
+        if (!raw) return
+        const snapshot = JSON.parse(raw) as GlassesSnapshot
+        if (snapshot?.mode === 'article') {
+          if (snapshot.filter) {
+            setSourceFilter(snapshot.filter)
+            filterRef.current = snapshot.filter
+          }
+          await glassesRef.current?.restore(snapshot)
+        }
+      } catch {
+        /* sessão antiga inválida */
+      }
+    })()
+  }, [glassesStatus.state, latest, restored])
+
+  /* tema ---------------------------------------------------------------- */
+  useEffect(() => {
+    const root = document.documentElement
+    const media = window.matchMedia('(prefers-color-scheme: dark)')
+    const apply = () => {
+      const resolved = settings.theme === 'system' ? (media.matches ? 'dark' : 'light') : settings.theme
+      root.dataset.theme = resolved
+      root.style.colorScheme = resolved
+      const meta = document.querySelector('meta[name="theme-color"]')
+      if (meta) meta.setAttribute('content', resolved === 'dark' ? '#0d0d0c' : '#f7f4ec')
+    }
+    apply()
+    if (settings.theme === 'system') {
+      media.addEventListener('change', apply)
+      return () => media.removeEventListener('change', apply)
+    }
+    return undefined
+  }, [settings.theme])
+
+  useEffect(() => {
+    document.documentElement.style.setProperty('--font-scale', String(settings.fontScale))
+  }, [settings.fontScale])
+
+  /* atualização automática ---------------------------------------------- */
+  useEffect(() => {
+    if (!settings.refreshMinutes) return
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === 'hidden') return
+      void refresh(false)
+    }, settings.refreshMinutes * 60_000)
+    return () => window.clearInterval(timer)
+  }, [settings.refreshMinutes, refresh])
+
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState !== 'visible') return
+      const at = Date.parse(latestRef.current?.generatedAt ?? '')
+      if (!Number.isFinite(at) || Date.now() - at > 5 * 60_000) void refresh(false)
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    window.addEventListener('online', onVisible)
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible)
+      window.removeEventListener('online', onVisible)
+    }
+  }, [refresh])
+
+  /* estado global para o host ------------------------------------------ */
+  useEffect(() => {
+    const scope = window as unknown as {
+      __getStateSnapshot?: () => string
+      __restoreState?: (raw: string) => void
+    }
+    scope.__getStateSnapshot = () =>
+      JSON.stringify({
+        tab,
+        category,
+        sourceFilter,
+        glasses: glassesRef.current?.getSnapshot() ?? null,
+      })
+    scope.__restoreState = (raw: string) => {
+      try {
+        const state = JSON.parse(raw) as { tab?: TabId; category?: CategoryId | 'tudo'; sourceFilter?: string | null }
+        if (state.tab) setTab(state.tab)
+        if (state.category) setCategory(state.category)
+        if (state.sourceFilter !== undefined) setSourceFilter(state.sourceFilter)
+      } catch {
+        /* snapshot inválido */
+      }
+    }
+    return () => {
+      delete scope.__getStateSnapshot
+      delete scope.__restoreState
+    }
+  }, [tab, category, sourceFilter])
+
+  /* derivações de tela -------------------------------------------------- */
+  const heroArticle = !hasFilters && tab === 'agora' ? pickHero(feed) : null
+  const listArticles = heroArticle ? feed.filter((article) => article.id !== heroArticle.id) : feed
+  const tickerArticles = latest?.articles.slice(0, 7) ?? []
+  const currentCategory = category === 'tudo' ? null : CATEGORY_META[category]
+
+  const readerSaved = reader ? savedIds.has(reader.meta.id) : false
+
+  return (
+    <div className="app">
+      <a className="skip-link" href="#conteudo">Pular para o conteúdo</a>
+
+      <Header
+        updatedAt={latest?.generatedAt ?? ''}
+        online={online}
+        totalSources={sources.length}
+        savedCount={saved.length}
+        onSaved={() => changeTab('salvos')}
+        onSearch={() => changeTab('buscar')}
+        stale={origin.kind === 'cache'}
+      />
+
+      {tab === 'agora' && (
+        <Ticker articles={tickerArticles} sourceMap={sourceMap} onOpen={(article) => void openArticle(article)} />
+      )}
+
+      {tab === 'agora' && (
+        <FilterBar
+          category={category}
+          onCategory={setCategory}
+          counts={categoryCounts}
+          sourceFilter={sourceFilter}
+          sourceName={sourceName}
+          onClearSource={() => setSourceFilter(null)}
+          onOpenSources={() => setSheetOpen(true)}
+          enabledCount={enabledCount}
+          totalSources={sources.length}
+        />
+      )}
+
+      <main id="conteudo" className="content">
+        {origin.kind === 'cache' && tab === 'agora' && (
+          <div className="offline-banner" role="status">
+            <WifiOffIcon size={17} />
+            <span>Sem sinal agora. Esta é a última edição guardada no celular.</span>
+            <button onClick={() => void refresh(true)}>Tentar</button>
+          </div>
+        )}
+
+        {tab === 'agora' && (
+          <>
+            {loading && !latest ? (
+              <FeedSkeleton />
+            ) : latest && latest.total === 0 ? (
+              <div className="empty">
+                <EmptyArt />
+                <h2>O farol ainda não acendeu</h2>
+                <p>
+                  Não recebemos a edição de hoje. Verifique sua conexão e puxe a atualização — o
+                  serviço publica notícias a cada 15 minutos.
+                </p>
+                <button className="btn btn--ink" onClick={() => void refresh(true)} disabled={refreshing}>
+                  <RefreshIcon size={17} className={refreshing ? 'spin' : ''} />
+                  Buscar a edição
+                </button>
+              </div>
+            ) : (
+              <>
+                {heroArticle && (
+                  <Hero
+                    article={heroArticle}
+                    source={sourceMap.get(heroArticle.sourceId)}
+                    saved={savedIds.has(heroArticle.id)}
+                    onOpen={() => void openArticle(heroArticle)}
+                    onToggleSave={() => void toggleSave(heroArticle)}
+                    onGlasses={() => void sendToGlasses(heroArticle)}
+                  />
+                )}
+
+                {hasFilters && (
+                  <div className="filter-summary">
+                    <span className="eyebrow">seu recorte</span>
+                    <h1>
+                      {currentCategory ? currentCategory.name : sourceName ?? 'Edição'}
+                      <span>{sourceName && currentCategory ? ` · ${sourceName}` : ''}</span>
+                    </h1>
+                    <div className="filter-summary__row">
+                      <span>{feed.length} matérias</span>
+                      <button className="link-btn" onClick={resetFilters}>limpar filtros</button>
+                    </div>
+                  </div>
+                )}
+
+                {!hasFilters && settings.showTips && (
+                  <TipCard
+                    onDismiss={() => updateSettings({ showTips: false })}
+                    onOpenGlasses={() => changeTab('ajustes')}
+                  />
+                )}
+
+                {!hasFilters && (
+                  <SourceRail
+                    sources={sources}
+                    active={sourceFilter}
+                    onPick={(id) => setSourceFilter(id)}
+                    onAll={() => setSourceFilter(null)}
+                    onOpenAll={() => setSheetOpen(true)}
+                  />
+                )}
+
+                {!loading && (listArticles.length > 0 || !heroArticle) && (
+                  <Feed
+                    articles={listArticles}
+                    sourceMap={sourceMap}
+                    savedIds={savedIds}
+                    onOpen={(article) => void openArticle(article)}
+                    onToggleSave={(article) => void toggleSave(article)}
+                    onRefresh={() => void refresh(true)}
+                    refreshing={refreshing}
+                    updatedAt={generatedLabel(latest?.generatedAt ?? '')}
+                    onOpenSources={() => setSheetOpen(true)}
+                    totalSources={sources.length}
+                    onlineSources={online}
+                    onResetFilters={resetFilters}
+                    hasFilters={hasFilters}
+                  />
+                )}
+              </>
+            )}
+          </>
+        )}
+
+        {tab === 'buscar' && (
+          <SearchView
+            query={searchQuery}
+            onQuery={setSearchQuery}
+            articles={baseArticles}
+            sourceMap={sourceMap}
+            savedIds={savedIds}
+            onOpen={(article) => void openArticle(article)}
+            onToggleSave={(article) => void toggleSave(article)}
+            recent={recent}
+            onRemember={rememberSearch}
+            onClearRecent={clearRecent}
+          />
+        )}
+
+        {tab === 'salvos' && (
+          <SavedView
+            saved={saved}
+            sourceMap={sourceMap}
+            onOpen={(entry) => void openArticle(entry)}
+            onRemove={(entry) => void toggleSave(entry)}
+            onExplore={() => changeTab('agora')}
+          />
+        )}
+
+        {tab === 'ajustes' && (
+          <SettingsView
+            settings={settings}
+            onChange={updateSettings}
+            glasses={glassesStatus}
+            latest={latest}
+            previewArticles={feed}
+            previewTotal={feed.length}
+            saved={saved}
+            sourceMap={sourceMap}
+            enabledCount={enabledCount}
+            totalSources={sources.length}
+            filterName={sourceName}
+            onOpenSources={() => setSheetOpen(true)}
+            onRefresh={() => void refresh(true)}
+            refreshing={refreshing}
+            onClearCache={async () => {
+              await clearFarolCache()
+              await refresh(true)
+            }}
+            onSendTop={() => {
+              const top = feed[0] ?? latest?.articles[0]
+              if (top) void sendToGlasses(top)
+              else showToast('Ainda não há manchete para enviar.')
+            }}
+            onToast={showToast}
+          />
+        )}
+      </main>
+
+      <BottomNav tab={tab} onChange={changeTab} savedCount={saved.length} />
+
+      {reader && (
+        <Reader
+          meta={reader.meta}
+          article={reader.article}
+          source={sourceMap.get(reader.meta.sourceId)}
+          saved={readerSaved}
+          fontScale={settings.fontScale}
+          onFontScale={(scale) => updateSettings({ fontScale: scale })}
+          onClose={closeReader}
+          onToggleSave={() => void toggleSave(reader.meta)}
+          onGlasses={() => void sendToGlasses(reader.meta)}
+        />
+      )}
+
+      {sheetOpen && (
+        <SourceSheet
+          sources={sources}
+          enabled={enabledSet}
+          onToggle={toggleSource}
+          onAll={() => updateSettings({ enabledSources: null })}
+          onClose={() => setSheetOpen(false)}
+        />
+      )}
+
+      <Toast toast={toast} onDismiss={dismissToast} />
+
+      {booting && <BootSplash leaving={splashLeaving} />}
+    </div>
+  )
+}

@@ -623,6 +623,7 @@ async function main() {
       id: source.id,
       name: source.name,
       short: source.short,
+      monogram: source.monogram ?? source.short.slice(0, 3),
       domain: source.domain,
       color: source.color,
       kind: source.kind,
