@@ -41,6 +41,7 @@ export interface ArticleMeta {
   publishedAt: string
   category: CategoryId
   summary: string
+  keywords?: string
   full: boolean
   readingMin: number
   author: string

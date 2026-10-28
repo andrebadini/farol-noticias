@@ -1,0 +1,9 @@
+1.0.0 — primeira edição
+
+• 23 veículos brasileiros em uma edição única, atualizada a cada 15 minutos.
+• Capa editorial com tipografia própria, arte generativa e leitura confortável.
+• Busca por voz (quando disponível) ou teclado, com sugestões e buscas recentes.
+• Filtros por categoria e fonte, válidos no celular e nos óculos.
+• Favoritos offline guardados no armazenamento do Even Hub.
+• Interface completa nos óculos G2: lista nativa, leitura paginada linha a linha, menu de dois toques, atualização manual por gesto e filtro por fonte.
+• Tema claro e escuro, sem login, sem anúncios e sem rastreamento.

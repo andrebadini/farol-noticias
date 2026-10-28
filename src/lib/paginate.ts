@@ -1,10 +1,12 @@
 import { measureTextWrap } from '@evenrealities/pretext'
 
 /**
- * Paginação pixel-perfect para o G2, usando as mesmas métricas de glifo que o
- * firmware LVGL. A altura de linha do firmware é fixa em 27 px.
+ * Paginação pixel-perfect para o G2.
  *
- * Adaptado do template oficial `text-heavy` da Even Realities (MIT).
+ * O firmware LVGL usa altura de linha fixa (27 px) e quebra o texto pela largura
+ * do container. Aqui a gente quebra o texto em linhas com as mesmas métricas de
+ * glifo e distribui essas linhas em páginas — assim uma manchete longa nunca
+ * "empurra" o corpo inteiro para a página seguinte deixando a primeira vazia.
  */
 const LINE_HEIGHT = 27
 
@@ -15,58 +17,43 @@ export interface PaginateBox {
 
 export function paginate(source: string, box: PaginateBox): string[] {
   const maxLines = Math.max(1, Math.floor(box.height / LINE_HEIGHT))
-  const paragraphs = source
-    .split(/\n{2,}/)
-    .map((p) => p.replace(/^>\s?/gm, '').replace(/[ \t]+/g, ' ').trim())
-    .filter(Boolean)
 
-  const pages: string[] = []
-  let buffer: string[] = []
-  let bufferLines = 0
-
-  const flush = () => {
-    if (!buffer.length) return
-    pages.push(buffer.join('\n\n'))
-    buffer = []
-    bufferLines = 0
-  }
-
-  for (const para of paragraphs) {
-    const paraLines = measureTextWrap(para, box.width).lineCount
-    if (paraLines > maxLines) {
-      flush()
-      for (const chunk of splitParagraph(para, box.width, maxLines)) pages.push(chunk)
+  // Preserva quebras de linha explícitas (textos de ajuda, citações) e
+  // transforma linhas vazias em respiro entre parágrafos.
+  const lines: string[] = []
+  for (const rawLine of source.split(/\n/)) {
+    const line = rawLine.replace(/^>\s?/, '').replace(/\s+/g, ' ').trim()
+    if (!line) {
+      if (lines.length && lines[lines.length - 1] !== '') lines.push('')
       continue
     }
-    const cost = paraLines + (buffer.length ? 1 : 0)
-    if (bufferLines + cost > maxLines) {
-      flush()
-      buffer.push(para)
-      bufferLines = paraLines
-    } else {
-      buffer.push(para)
-      bufferLines += cost
-    }
+    lines.push(...wrapParagraph(line, box.width))
   }
-  flush()
-  return pages.length ? pages : ['(sem conteúdo)']
+  while (lines.length && lines[lines.length - 1] === '') lines.pop()
+
+  const pages: string[] = []
+  for (let start = 0; start < lines.length; start += maxLines) {
+    const chunk = lines.slice(start, start + maxLines)
+    while (chunk.length && chunk[0] === '') chunk.shift()
+    while (chunk.length && chunk[chunk.length - 1] === '') chunk.pop()
+    if (chunk.length) pages.push(chunk.join('\n'))
+  }
+  return pages.length ? pages : ['']
 }
 
-function splitParagraph(text: string, width: number, maxLines: number): string[] {
-  const tokens = text.split(/(\s+)/)
-  const chunks: string[] = []
-  let current = ''
-
-  for (const token of tokens) {
-    const candidate = current + token
-    const { lineCount } = measureTextWrap(candidate, width)
-    if (lineCount > maxLines && current.trim()) {
-      chunks.push(current.trim())
-      current = token.replace(/^\s+/, '')
+function wrapParagraph(text: string, width: number): string[] {
+  const words = text.split(/\s+/).filter(Boolean)
+  const lines: string[] = []
+  let line = ''
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word
+    if (line && measureTextWrap(candidate, width).lineCount > 1) {
+      lines.push(line)
+      line = word
     } else {
-      current = candidate
+      line = candidate
     }
   }
-  if (current.trim()) chunks.push(current.trim())
-  return chunks
+  if (line) lines.push(line)
+  return lines
 }

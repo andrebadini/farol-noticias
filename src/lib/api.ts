@@ -59,7 +59,7 @@ export async function fetchLatest(force = false): Promise<LatestResult> {
       if (cached && Date.parse(cached.generatedAt) > Date.parse(payload.generatedAt) && attempt.kind !== 'remote') {
         return { payload: cached, origin: { kind: 'cache', at: Date.now() } }
       }
-      void saveLatestCache(payload)
+      if (!cached || cached.generatedAt !== payload.generatedAt) void saveLatestCache(payload)
       return { payload, origin: { kind: attempt.kind, at: Date.now() } }
     } catch {
       /* tenta o próximo */

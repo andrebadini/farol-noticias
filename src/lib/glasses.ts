@@ -88,7 +88,9 @@ export class GlassesUI {
   private pages: string[] = []
   private page = 0
   private actions: Array<() => void> = []
+  private homeArticles: ArticleMeta[] = []
   private feedSignature = ''
+  private pendingRestore: GlassesSnapshot | null = null
   private notice = ''
   private noticeTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -122,14 +124,14 @@ export class GlassesUI {
               textColor: DIM, content: this.topicLine(), isEventCapture: 0,
             }),
             new TextContainerProperty({
-              xPosition: 0, yPosition: 250, width: W, height: 38,
+              xPosition: 0, yPosition: 252, width: W, height: 36,
               paddingLength: 4, containerID: 4, containerName: 'hint',
               textColor: DIM, content: '▲▼ rolar  ·  ● abrir  ·  2× menu', isEventCapture: 0,
             }),
           ],
           listObject: [
             new ListContainerProperty({
-              xPosition: 0, yPosition: 72, width: W, height: 178,
+              xPosition: 0, yPosition: 72, width: W, height: 160,
               paddingLength: 2, borderWidth: 0, containerID: 3, containerName: 'feed',
               isEventCapture: 1,
               itemContainer: new ListItemContainerProperty({
@@ -230,15 +232,26 @@ export class GlassesUI {
     const signature = `${filter ?? 'all'}|${feed
       .slice(0, 20)
       .map((a) => a.id)
-      .join(',')}`
+      .join(',')}|${saved.map((entry) => entry.id).join(',')}`
     const changed = signature !== this.feedSignature
     this.feed = feed
     this.sources = sources
     this.saved = saved
     this.filter = filter
     this.feedSignature = signature
-    if (!this.ready || !changed) return
+    if (!this.ready) return
+    if (this.pendingRestore) {
+      const snapshot = this.pendingRestore
+      const meta = feed.find((article) => article.id === snapshot.articleId)
+      if (meta) {
+        this.pendingRestore = null
+        void this.restore(snapshot)
+        return
+      }
+    }
+    if (!changed) return
     if (this.mode === 'home') void this.renderHome()
+    else if (this.mode === 'saved') void this.renderSaved()
   }
 
   async showArticle(meta: ArticleMeta): Promise<void> {
@@ -256,7 +269,7 @@ export class GlassesUI {
 
   private paginateArticle(article: ArticleFull): string[] {
     const source = this.sourceFor(article.sourceId)
-    const meta = `${source?.name ?? article.sourceId} · ${relativeTime(article.publishedAt)} · ${article.readingMin} min`
+    const meta = `${source?.name ?? article.sourceId} · ${relativeTime(article.publishedAt)} · leitura ${article.readingMin} min`
     const body =
       (article.content || article.summary || '').trim() ||
       'Esta matéria ainda não tem texto completo no Farol. Abra a versão original no celular.'
@@ -289,10 +302,14 @@ export class GlassesUI {
     const picked: ArticleMeta[] = []
     const counts = new Map<string, number>()
     const overflow: ArticleMeta[] = []
+    const noise = /(lotof[aá]cil|quina|mega-sena|lotomania|sorteio|resultado do|hor[oó]scopo|bbb|celebridade)/i
     for (const article of this.feed) {
       if (picked.length >= 20) break
       const count = counts.get(article.sourceId) ?? 0
-      if (count < 2) {
+      const perSource = picked.length < 8 ? 1 : 2
+      if (noise.test(article.title) && picked.length < 14) {
+        overflow.push(article)
+      } else if (count < perSource) {
         picked.push(article)
         counts.set(article.sourceId, count + 1)
       } else {
@@ -303,6 +320,7 @@ export class GlassesUI {
       if (picked.length >= 20) break
       picked.push(article)
     }
+    this.homeArticles = picked
     return picked.map((article) => {
       const source = this.sourceFor(article.sourceId)
       const prefix = source?.short ?? article.sourceId
@@ -355,14 +373,14 @@ export class GlassesUI {
             textColor: DIM, content: this.topicLine(), isEventCapture: 0,
           }),
           new TextContainerProperty({
-            xPosition: 0, yPosition: 250, width: W, height: 38,
+            xPosition: 0, yPosition: 252, width: W, height: 36,
             paddingLength: 4, containerID: 4, containerName: 'hint',
             textColor: DIM, content: '▲▼ rolar  ·  ● abrir  ·  2× menu', isEventCapture: 0,
           }),
         ],
         listObject: [
           new ListContainerProperty({
-            xPosition: 0, yPosition: 72, width: W, height: 178,
+            xPosition: 0, yPosition: 72, width: W, height: 160,
             paddingLength: 2, borderWidth: 0, containerID: 3, containerName: 'feed',
             isEventCapture: 1,
             itemContainer: new ListItemContainerProperty({
@@ -441,7 +459,7 @@ export class GlassesUI {
   private onListSelect(index: number) {
     if (!this.ready) return
     if (this.mode === 'home') {
-      const meta = this.feed[index]
+      const meta = this.homeArticles[index]
       if (meta) void this.showArticle(meta)
       else void this.deps.refresh()
       return
@@ -453,11 +471,15 @@ export class GlassesUI {
     if (this.mode === 'sources') {
       const list = this.topSources()
       if (index === 0) {
+        this.filter = null
         this.deps.setFilter(null)
       } else {
         const source = list[index - 1]
-        if (source) this.deps.setFilter(source.id)
+        if (!source) return
+        this.filter = source.id
+        this.deps.setFilter(source.id)
       }
+      void this.renderHome()
       return
     }
     if (this.mode === 'saved') {
@@ -485,20 +507,20 @@ export class GlassesUI {
       this.actions.push(() => this.renderArticle())
     }
 
-    items.push('↻  Atualizar notícias')
+    items.push('▶  Atualizar notícias')
     this.actions.push(() => this.manualRefresh())
-    items.push('◫  Filtrar por fonte')
+    items.push('▷  Filtrar por fonte')
     this.actions.push(() => this.renderSources())
     items.push('★  Matérias salvas')
     this.actions.push(() => this.renderSaved())
     items.push('◈  Como usar')
     this.actions.push(() => this.renderHelp())
-    items.push('⏻  Sair do Farol')
+    items.push('×  Sair do Farol')
     this.actions.push(() => this.exit())
 
     const subtitle =
       from === 'article' && this.current
-        ? cut(this.current.title, 105)
+        ? cut(this.current.title, 48)
         : `${this.feed.length} matérias · atualize ou filtre`
 
     await this.rebuild(
@@ -511,19 +533,19 @@ export class GlassesUI {
             textColor: BRIGHT, content: 'MENU', isEventCapture: 0,
           }),
           new TextContainerProperty({
-            xPosition: 0, yPosition: 35, width: W, height: 62,
+            xPosition: 0, yPosition: 35, width: W, height: 35,
             paddingLength: 4, containerID: 2, containerName: 'subtitle',
             textColor: DIM, content: subtitle, isEventCapture: 0,
           }),
           new TextContainerProperty({
-            xPosition: 0, yPosition: 250, width: W, height: 38,
+            xPosition: 0, yPosition: 252, width: W, height: 36,
             paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: '● escolher  ·  2× voltar', isEventCapture: 0,
+            textColor: DIM, content: '▲▼ rolar  ·  ● escolher  ·  2× voltar', isEventCapture: 0,
           }),
         ],
         listObject: [
           new ListContainerProperty({
-            xPosition: 0, yPosition: 100, width: W, height: 148,
+            xPosition: 0, yPosition: 72, width: W, height: 178,
             paddingLength: 2, containerID: 3, containerName: 'menu',
             isEventCapture: 1,
             itemContainer: new ListItemContainerProperty({
@@ -549,6 +571,7 @@ export class GlassesUI {
   private async toggleCurrentSave(): Promise<void> {
     if (!this.current) return
     const saved = await this.deps.toggleSave(this.current)
+    this.saved = this.deps.getSaved()
     this.notice = saved ? '★ SALVO NO CELULAR' : '☆ REMOVIDO DOS SALVOS'
     await this.showActions('article')
     this.scheduleNoticeClear()
@@ -560,7 +583,7 @@ export class GlassesUI {
     if (this.mode === 'home') await this.upgradeText(2, 'topic', this.notice)
     try {
       await this.deps.refresh()
-      this.notice = '✓ ATUALIZADO AGORA'
+      this.notice = 'OK · ATUALIZADO AGORA'
     } catch {
       this.notice = '! SEM CONEXÃO — TENTE DE NOVO'
     }
@@ -583,7 +606,7 @@ export class GlassesUI {
     if (!this.ready) return
     this.mode = 'sources'
     const list = this.topSources()
-    const items = ['◉  Todas as fontes', ...list.map((source) => `${this.filter === source.id ? '●' : '○'}  ${source.name} · ${source.count}`)]
+    const items = ['●  Todas as fontes', ...list.map((source) => `${this.filter === source.id ? '●' : '○'}  ${source.name} · ${source.count}`)]
     await this.rebuild(
       new RebuildPageContainer({
         containerTotalNum: 4,
@@ -599,14 +622,14 @@ export class GlassesUI {
             textColor: DIM, content: this.filter ? `filtrando: ${this.sourceFor(this.filter)?.name ?? this.filter}` : 'mostrando todas as fontes', isEventCapture: 0,
           }),
           new TextContainerProperty({
-            xPosition: 0, yPosition: 250, width: W, height: 38,
+            xPosition: 0, yPosition: 252, width: W, height: 36,
             paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: '● filtrar  ·  2× voltar', isEventCapture: 0,
+            textColor: DIM, content: '▲▼ rolar  ·  ● filtrar  ·  2× voltar', isEventCapture: 0,
           }),
         ],
         listObject: [
           new ListContainerProperty({
-            xPosition: 0, yPosition: 70, width: W, height: 180,
+            xPosition: 0, yPosition: 70, width: W, height: 160,
             paddingLength: 2, containerID: 3, containerName: 'menu',
             isEventCapture: 1,
             itemContainer: new ListItemContainerProperty({
@@ -626,7 +649,7 @@ export class GlassesUI {
     this.mode = 'saved'
     if (!this.saved.length) {
       this.pages = paginate(
-        'NADA SALVO AINDA\n\nAbra uma matéria, toque no menu (2 toques) e escolha ★ Salvar.\n\nO texto fica guardado no seu celular — disponível mesmo sem internet.\n\n●  voltar',
+        'NADA SALVO AINDA\n\nAbra uma matéria e toque\nem ★ Salvar (no menu).\n\nFica no seu celular, mesmo\noffline.',
         { width: BODY_W, height: BODY_H },
       )
       this.page = 0
@@ -668,14 +691,14 @@ export class GlassesUI {
             textColor: DIM, content: 'guardados no seu celular', isEventCapture: 0,
           }),
           new TextContainerProperty({
-            xPosition: 0, yPosition: 250, width: W, height: 38,
+            xPosition: 0, yPosition: 252, width: W, height: 36,
             paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: '● abrir  ·  2× voltar', isEventCapture: 0,
+            textColor: DIM, content: '▲▼ rolar  ·  ● abrir  ·  2× voltar', isEventCapture: 0,
           }),
         ],
         listObject: [
           new ListContainerProperty({
-            xPosition: 0, yPosition: 70, width: W, height: 180,
+            xPosition: 0, yPosition: 70, width: W, height: 160,
             paddingLength: 2, containerID: 3, containerName: 'menu',
             isEventCapture: 1,
             itemContainer: new ListItemContainerProperty({
@@ -695,19 +718,19 @@ export class GlassesUI {
     this.mode = 'help'
     const help = `◈ FAROL — COMO USAR
 
-▲ ▼    navegar e virar página
-●      abrir a matéria
-●●     2 toques: menu de ações
+▲ ▼  navegar e virar página
+●    abrir a matéria
+●●   2 toques: menu de ações
 2× em matéria abre o menu
+
+${'─'.repeat(34)}
 
 No menu: atualizar, filtrar
 por fonte, salvar, ajuda e sair.
 
 O Farol atualiza sozinho a
 cada 15 minutos. Gesto manual:
-2 toques → ↻ Atualizar.
-
-● voltar`
+2 toques → menu Atualizar.`
     this.pages = paginate(help, { width: BODY_W, height: BODY_H })
     this.page = 0
     await this.rebuild(
@@ -759,14 +782,23 @@ cada 15 minutos. Gesto manual:
 
   async restore(snapshot: GlassesSnapshot): Promise<void> {
     this.filter = snapshot.filter
+    this.feed = this.deps.getFeed()
+    this.sources = this.deps.getSources()
+    this.saved = this.deps.getSaved()
     if (snapshot.mode === 'article' && snapshot.articleId) {
-      const meta = this.feed.find((article) => article.id === snapshot.articleId) ?? this.saved.find((article) => article.id === snapshot.articleId)
+      const meta =
+        this.feed.find((article) => article.id === snapshot.articleId) ??
+        this.saved.find((article) => article.id === snapshot.articleId)
       if (meta) {
+        this.pendingRestore = null
         await this.showArticle(meta)
         this.page = Math.min(snapshot.page, this.pages.length - 1)
         await this.renderArticle()
         return
       }
+      // O feed ainda pode estar carregando: tenta de novo no próximo setData.
+      this.pendingRestore = snapshot
+      return
     }
     await this.renderHome()
   }

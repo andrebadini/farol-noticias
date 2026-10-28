@@ -207,7 +207,7 @@ export function SettingsView({
         </div>
       </div>
 
-      <div className="settings-card settings-card--glasses">
+      <div className="settings-card settings-card--glasses" id="glasses-card">
         <div className="settings-card__head">
           <h2>Even Realities G2</h2>
           <span className={`status-pill ${glasses.state === 'ready' ? 'is-online' : ''}`}>

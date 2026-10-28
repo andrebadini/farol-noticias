@@ -51,11 +51,13 @@ export function SearchView({
         const title = normalize(article.title)
         const summary = normalize(article.summary)
         const source = normalize(sourceMap.get(article.sourceId)?.name ?? article.sourceId)
+        const keywords = normalize(article.keywords ?? '')
         let score = 0
         if (title.startsWith(q)) score += 6
         else if (title.includes(q)) score += 4
         if (summary.includes(q)) score += 2
         if (source.includes(q)) score += 3
+        if (keywords.includes(q)) score += 1
         return { article, score }
       })
       .filter((item) => item.score > 0)

@@ -413,15 +413,15 @@ p {
 .ticker__viewport {
   flex: 1;
   overflow: hidden;
-  mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 24px), transparent);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 18px, #000 calc(100% - 24px), transparent);
+  mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent);
+  -webkit-mask-image: linear-gradient(90deg, #000 0, #000 calc(100% - 24px), transparent);
 }
 
 .ticker__track {
   display: flex;
   width: max-content;
-  animation: marquee 64s linear infinite;
-  animation-delay: 1.4s;
+  animation: marquee 80s linear infinite;
+  animation-delay: 4s;
 }
 
 .ticker:hover .ticker__track,
@@ -1285,6 +1285,24 @@ p {
   letter-spacing: 0;
 }
 
+
+.nav-fade {
+  position: fixed;
+  left: 50%;
+  bottom: 0;
+  z-index: 45;
+  width: min(100%, var(--app-w));
+  height: 112px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    var(--paper) 18%,
+    color-mix(in srgb, var(--paper) 78%, transparent) 56%,
+    transparent 100%
+  );
+}
+
 /* ----------------------------------------------------------------- reader */
 
 .reader {
@@ -1600,7 +1618,7 @@ p {
   padding: 5px;
   border: 1px solid var(--line);
   border-radius: 22px;
-  background: color-mix(in srgb, var(--paper) 88%, transparent);
+  background: var(--paper);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   box-shadow: 0 14px 38px rgba(20, 19, 15, 0.16);
@@ -1614,10 +1632,10 @@ p {
   gap: 2px;
   padding: 8px 4px 6px;
   border-radius: 17px;
-  font-size: 9px;
+  font-size: 9.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
-  color: var(--muted);
+  color: var(--ink-soft);
 }
 
 .dock-btn.is-on {
@@ -3022,6 +3040,23 @@ p {
   color: var(--accent-ink);
 }
 
+
+:root[data-theme='dark'] .switch {
+  background: #35342e;
+}
+
+:root[data-theme='dark'] .switch span {
+  background: #8f8a7c;
+}
+
+:root[data-theme='dark'] .switch.is-on {
+  background: var(--accent);
+}
+
+:root[data-theme='dark'] .switch.is-on span {
+  background: var(--accent-ink);
+}
+
 :root[data-theme='dark'] .chip.is-active .chip__count {
   color: #6f671f;
 }
@@ -3073,6 +3108,12 @@ p {
 
   .bottom-nav {
     bottom: 32px;
+  }
+
+  .nav-fade {
+    bottom: 20px;
+    height: 128px;
+    border-radius: 0 0 30px 30px;
   }
 
   .toast {

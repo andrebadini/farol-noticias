@@ -115,9 +115,11 @@ export default function App() {
   const filterRef = useRef(sourceFilter)
   const feedRef = useRef<ArticleMeta[]>([])
   const sourcesRef = useRef(FALLBACK_SOURCES)
+  const glassesSourcesRef = useRef(FALLBACK_SOURCES)
   const refreshRef = useRef<(manual?: boolean) => Promise<void>>(async () => undefined)
   const toggleSaveRef = useRef<(article: ArticleMeta) => Promise<boolean>>(async () => false)
   const glassesRef = useRef<GlassesUI | null>(null)
+  const pendingGlassesRef = useRef<GlassesSnapshot | null>(null)
   const sessionTimer = useRef<number | null>(null)
 
   const showToast = useCallback((text: string, tone: ToastMessage['tone'] = 'default') => {
@@ -169,6 +171,7 @@ export default function App() {
 
   feedRef.current = feed
   sourcesRef.current = sources
+  glassesSourcesRef.current = sources.filter((source) => enabledSet.has(source.id))
   savedRef.current = saved
   filterRef.current = sourceFilter
   settingsRef.current = settings
@@ -283,9 +286,10 @@ export default function App() {
         showToast('Mantenha pelo menos uma fonte ativa.')
         return
       }
+      if (sourceFilter === id && !next.includes(id)) setSourceFilter(null)
       updateSettings({ enabledSources: next.length === allIds.length ? null : next })
     },
-    [sources, showToast, updateSettings],
+    [sources, sourceFilter, showToast, updateSettings],
   )
 
   const resetFilters = useCallback(() => {
@@ -323,10 +327,16 @@ export default function App() {
   }, [])
 
   const persistSession = useCallback((snapshot: GlassesSnapshot) => {
+    const raw = JSON.stringify(snapshot)
+    try {
+      window.localStorage.setItem(SESSION_KEY, raw)
+    } catch {
+      /* modo privado */
+    }
     if (sessionTimer.current) window.clearTimeout(sessionTimer.current)
     sessionTimer.current = window.setTimeout(() => {
-      void kvSet(SESSION_KEY, JSON.stringify(snapshot))
-    }, 500)
+      void kvSet(SESSION_KEY, raw)
+    }, 120)
   }, [])
 
   /* boot ---------------------------------------------------------------- */
@@ -370,7 +380,7 @@ export default function App() {
   useEffect(() => {
     const ui = new GlassesUI({
       getFeed: () => feedRef.current,
-      getSources: () => sourcesRef.current,
+      getSources: () => glassesSourcesRef.current,
       getSaved: () => savedRef.current,
       getFilter: () => filterRef.current,
       setFilter: (id) => {
@@ -382,7 +392,14 @@ export default function App() {
       refresh: async () => {
         await refreshRef.current(false)
       },
-      onStatus: (status) => setGlassesStatus(status),
+      onStatus: (status) => {
+        setGlassesStatus(status)
+        if (status.state === 'ready' && pendingGlassesRef.current) {
+          const snapshot = pendingGlassesRef.current
+          pendingGlassesRef.current = null
+          void glassesRef.current?.restore(snapshot)
+        }
+      },
       onSession: (snapshot) => persistSession(snapshot),
     })
     glassesRef.current = ui
@@ -394,15 +411,27 @@ export default function App() {
   }, [persistSession])
 
   useEffect(() => {
-    glassesRef.current?.setData(feed, sources, saved, sourceFilter)
-  }, [feed, sources, saved, sourceFilter])
+    glassesRef.current?.setData(
+      feed,
+      sources.filter((source) => enabledSet.has(source.id)),
+      saved,
+      sourceFilter,
+    )
+  }, [feed, sources, saved, sourceFilter, enabledSet])
 
   useEffect(() => {
     if (restored || glassesStatus.state !== 'ready' || !latest) return
     setRestored(true)
     void (async () => {
       try {
-        const raw = await kvGet(SESSION_KEY)
+        let raw = await kvGet(SESSION_KEY)
+        if (!raw) {
+          try {
+            raw = window.localStorage.getItem(SESSION_KEY) ?? ''
+          } catch {
+            raw = ''
+          }
+        }
         if (!raw) return
         const snapshot = JSON.parse(raw) as GlassesSnapshot
         if (snapshot?.mode === 'article') {
@@ -480,10 +509,19 @@ export default function App() {
       })
     scope.__restoreState = (raw: string) => {
       try {
-        const state = JSON.parse(raw) as { tab?: TabId; category?: CategoryId | 'tudo'; sourceFilter?: string | null }
+        const state = JSON.parse(raw) as {
+          tab?: TabId
+          category?: CategoryId | 'tudo'
+          sourceFilter?: string | null
+          glasses?: GlassesSnapshot | null
+        }
         if (state.tab) setTab(state.tab)
         if (state.category) setCategory(state.category)
         if (state.sourceFilter !== undefined) setSourceFilter(state.sourceFilter)
+        if (state.glasses) {
+          pendingGlassesRef.current = state.glasses
+          if (glassesRef.current) void glassesRef.current.restore(state.glasses)
+        }
       } catch {
         /* snapshot inválido */
       }
@@ -497,7 +535,18 @@ export default function App() {
   /* derivações de tela -------------------------------------------------- */
   const heroArticle = !hasFilters && tab === 'agora' ? pickHero(feed) : null
   const listArticles = heroArticle ? feed.filter((article) => article.id !== heroArticle.id) : feed
-  const tickerArticles = latest?.articles.slice(0, 7) ?? []
+  const tickerArticles = useMemo(() => {
+    const picked: ArticleMeta[] = []
+    const seen = new Set<string>()
+    for (const article of latest?.articles ?? []) {
+      if (LOW_SIGNAL.test(article.title)) continue
+      if (seen.has(article.sourceId)) continue
+      seen.add(article.sourceId)
+      picked.push(article)
+      if (picked.length === 6) break
+    }
+    return picked
+  }, [latest])
   const currentCategory = category === 'tudo' ? null : CATEGORY_META[category]
 
   const readerSaved = reader ? savedIds.has(reader.meta.id) : false
@@ -590,7 +639,12 @@ export default function App() {
                 {!hasFilters && settings.showTips && (
                   <TipCard
                     onDismiss={() => updateSettings({ showTips: false })}
-                    onOpenGlasses={() => changeTab('ajustes')}
+                    onOpenGlasses={() => {
+                      changeTab('ajustes')
+                      window.setTimeout(() => {
+                        document.getElementById('glasses-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                      }, 200)
+                    }}
                   />
                 )}
 
@@ -680,6 +734,8 @@ export default function App() {
           />
         )}
       </main>
+
+      <div className="nav-fade" aria-hidden="true" />
 
       <BottomNav tab={tab} onChange={changeTab} savedCount={saved.length} />
 

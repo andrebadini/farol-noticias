@@ -63,6 +63,31 @@ function stripAccents(s = '') {
   return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '')
 }
 
+const SEARCH_STOP = new Set(
+  'para como mais menos muito pouco isso aquilo este esta esse essa aquele aquela entre sobre depois antes quando onde qual quais quem cujo cuja seus suas pelo pela pelos pelas ainda também apenas ainda desde mesmo mesma outro outra outros outras todo toda todos todas fazer feito disse diz ainda hoje ontem agora porque porém contudo entretanto segundo afirma informa aponta revela mostra pode podem deve devem será serão foi foram tem têm havia'.split(' '),
+)
+
+function searchKeywords(title = '', body = '') {
+  const text = stripAccents(`${title} ${title} ${body}`.toLowerCase())
+  const words = text.match(/[a-z0-9]{4,}/g) ?? []
+  const counts = new Map()
+  for (const word of words) {
+    if (SEARCH_STOP.has(word)) continue
+    counts.set(word, (counts.get(word) ?? 0) + 1)
+  }
+  return [...counts.entries()]
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
+    .slice(0, 22)
+    .map(([word]) => word)
+    .join(' ')
+}
+
+function stripSourcePrefix(text = '', short = '') {
+  if (!text || !short) return text
+  const escaped = short.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return String(text).replace(new RegExp(`^${escaped}\\s*[–—-]\\s*`, 'i'), '').trim()
+}
+
 function cleanText(input = '') {
   return decodeEntities(String(input))
     .replace(/\u00a0/g, ' ')
@@ -386,6 +411,7 @@ async function extractFullText(url) {
  */
 function cleanArticleText(text, max = 6500) {
   const seen = new Set()
+  text = String(text).replace(/continua (após|depois) a publicidade[^\n]*/gi, '\n\n')
   const drop =
     /^(moedas|dólar (comercial|turismo)|euro (comercial|turismo)|ibovespa|bolsa de valores|oferecido por|publicidade|continua após|compartilhe|assine|já é assinante|leia também|leia mais|veja também|saiba mais|receba (as|os)|siga (o|a)|apoie|tempo de leitura|por que isso importa|em resumo|ouça (o|a)|crédito|legenda|foto:|imagem:)/i
   const parts = String(text)
@@ -394,6 +420,7 @@ function cleanArticleText(text, max = 6500) {
     .filter((p) => p.length > 2)
     .filter((p) => !/^[-–—_*·\s]+$/.test(p))
     .filter((p) => !drop.test(p))
+    .filter((p) => !/^(resumo|resumo\s*[+＋]|em resumo|o que aconteceu|o que você precisa saber|entenda( o caso)?|contexto|saiba mais|veja também|leia também)$/i.test(p))
     .filter((p) => !(p.length < 170 && /^(moedas|dólar|euro|ibovespa)/i.test(p)))
     .filter((p) => {
       const key = stripAccents(p.toLowerCase()).replace(/[^a-z0-9]+/g, ' ').slice(0, 70)
@@ -402,6 +429,23 @@ function cleanArticleText(text, max = 6500) {
       return true
     })
   let out = parts.join('\n\n')
+  if (!out.includes('\n\n') && out.length > 700) {
+    // Alguns extratotes devolvem um único paredão de texto. Quebra em blocos
+    // de ~480 caracteres respeitando fim de frase, para leitura no celular e
+    // nos óculos.
+    const sentences = out.match(/[^.!?…]+[.!?…]+["”’]?/g) ?? [out]
+    const blocks = []
+    let block = ''
+    for (const sentence of sentences) {
+      if (block && block.length + sentence.length > 480) {
+        blocks.push(block.trim())
+        block = ''
+      }
+      block += sentence
+    }
+    if (block.trim()) blocks.push(block.trim())
+    if (blocks.length > 1) out = blocks.join('\n\n')
+  }
   if (out.length > max) {
     out = out.slice(0, max)
     const cut = out.lastIndexOf('\n\n')
@@ -654,7 +698,8 @@ async function main() {
       url: a.url,
       publishedAt: a.publishedAt,
       category: a.category,
-      summary: a.summary,
+      summary: stripSourcePrefix(a.summary, SOURCES.find((source) => source.id === a.sourceId)?.short ?? ''),
+      keywords: searchKeywords(a.title, (a.content || a.summary || '').slice(0, 5000)),
       full: Boolean(a.content && a.content.length > 450),
       readingMin: Math.max(1, Math.round((a.content || a.summary).split(/\s+/).length / 200)),
       author: a.author || '',
@@ -673,10 +718,10 @@ async function main() {
       url: article.url,
       publishedAt: article.publishedAt,
       category: article.category,
-      summary: article.summary,
+      summary: stripSourcePrefix(article.summary, SOURCES.find((source) => source.id === article.sourceId)?.short ?? ''),
       author: article.author || '',
       full: Boolean(article.content && article.content.length > 450),
-      content: article.content || '',
+      content: article.content ? cleanArticleText(article.content) : '',
     }
     const json = JSON.stringify(payload)
     bytes += json.length
@@ -698,8 +743,36 @@ code{background:#1a1a18;padding:3px 6px;border-radius:6px;color:#fef991} a{color
 </style></head><body><main><span class="k">farol · dados abertos</span><h1>Notícias do Brasil,<br>num olhar.</h1>
 <p>Snapshot estático que alimenta o plugin <strong>Farol Notícias</strong> nos óculos Even Realities G2.</p>
 <p><strong>${list.length}</strong> matérias · <strong>${okCount}/${SOURCES.length}</strong> fontes no ar · atualizado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (Brasília).</p>
-<p><a href="./data/latest.json">data/latest.json</a></p>
+<p><a href="./data/latest.json">data/latest.json</a> · <a href="./privacy.html">privacidade</a> · <a href="https://github.com/andrebadini/farol-noticias">código</a></p>
 <p style="font-size:12px;color:#6d6a62">Atualização automática a cada 15 minutos via GitHub Actions. Conteúdo de terceiros; os direitos são dos veículos originais.</p></main></body></html>`,
+  )
+
+  await writeFile(
+    join(OUT_DIR, 'privacy.html'),
+    `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Farol Notícias · Privacidade</title><style>
+:root{color-scheme:dark}body{margin:0;background:#0c0c0b;color:#f2efe8;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:700px;margin:0 auto;padding:48px 24px 72px} .k{display:inline-block;padding:4px 10px;border:1px solid #fef991;color:#fef991;border-radius:999px;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+h1{font-size:46px;line-height:1;letter-spacing:-.03em;margin:20px 0 8px} h2{font-size:20px;margin:34px 0 8px;letter-spacing:-.01em} p,li{color:#b9b4a7}
+a{color:#fef991} small{color:#7d786c} strong{color:#f2efe8}
+</style></head><body><main>
+<span class="k">farol · privacidade</span>
+<h1>Privacidade,<br>sem letra miúda.</h1>
+<p>O Farol Notícias é um leitor de notícias para os óculos Even Realities G2. Ele não tem login, não pede dados pessoais e não usa rastreadores.</p>
+<h2>O que o app faz</h2>
+<p>O app baixa um arquivo público de manchetes e matérias do endereço <a href="https://andrebadini.github.io/farol-noticias/data/latest.json">andrebadini.github.io/farol-noticias</a>, mantido por um robô que lê os feeds RSS públicos dos veículos citados no app. Nenhuma informação sua é enviada nesse pedido.</p>
+<h2>O que fica no seu celular</h2>
+<p>Favoritos, ajustes, cache da edição e a última matéria aberta ficam no armazenamento local do Even Hub (ou no armazenamento do navegador, em modo de desenvolvimento). Eles não saem do seu aparelho. Ao desinstalar o app, esses dados podem ser removidos pelo sistema.</p>
+<h2>Busca por voz</h2>
+<p>Quando o WebView do Even Hub oferece reconhecimento de voz, o áudio é processado pelo serviço do sistema/navegador, conforme a política da plataforma. O Farol não grava nem envia áudio para servidores próprios. Se o recurso não estiver disponível, use o ditado do teclado do celular.</p>
+<h2>Links para os veículos</h2>
+<p>Ao abrir a versão original, você sai do Farol e passa a navegar no site do veículo, sujeito à política de privacidade dele. O Farol não controla esses sites.</p>
+<h2>Conteúdo de terceiros</h2>
+<p>As notícias pertencem aos veículos que as publicaram. O Farol apenas organiza os feeds públicos e sempre indica a fonte e o link original. Para pedir a remoção de um conteúdo do agregador, abra uma issue no repositório do projeto.</p>
+<h2>Contato</h2>
+<p>Dúvidas, sugestões ou remoção de conteúdo: <a href="https://github.com/andrebadini/farol-noticias/issues">github.com/andrebadini/farol-noticias/issues</a>.</p>
+<p><small>Última atualização: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · Farol Notícias 1.0.0</small></p>
+</main></body></html>`,
   )
 
   log(`snapshot: ${list.length} matérias · latest=${(JSON.stringify(latest).length / 1024).toFixed(0)}KB · artigos=${(bytes / 1024).toFixed(0)}KB · fontes ok=${okCount}/${SOURCES.length}`)
