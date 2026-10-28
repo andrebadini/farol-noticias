@@ -5,7 +5,7 @@ const DEFAULT_BASE = 'https://andrebadini.github.io/farol-noticias/data'
 const REMOTE_BASE = (import.meta.env.VITE_DATA_BASE as string | undefined)?.replace(/\/$/, '') || DEFAULT_BASE
 const LOCAL_BASE = new URL('./data', document.baseURI).href.replace(/\/$/, '')
 
-const TIMEOUT_LATEST = 9000
+const TIMEOUT_LATEST = 5000
 const TIMEOUT_ARTICLE = 8000
 
 export const DATA_ENDPOINT = REMOTE_BASE
