@@ -296,7 +296,10 @@ export class GlassesUI {
   }
 
   private listItems(): string[] {
-    if (!this.feed.length) return ['◈  Sem notícias agora — 2× para atualizar']
+    if (!this.feed.length) {
+      this.homeArticles = []
+      return ['◈  Sem notícias agora — 2× para atualizar']
+    }
     // Diversidade: no máximo 2 manchetes por veículo nas 20 primeiras, para a
     // home não virar um feed de uma fonte só quando ela publica em rajada.
     const picked: ArticleMeta[] = []
