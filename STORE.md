@@ -15,6 +15,8 @@ Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com
 | **Idioma da interface** | Português (Brasil) | — |
 | **País / região** | Brasil | — |
 | **Versão** | `1.0.0` | semver |
+| **min_app_version** | `2.2.10` | exigido pelo SDK 0.0.16 |
+| **min_sdk_version** | `0.0.16` | SDK usado no build |
 | **Política de privacidade** | https://andrebadini.github.io/farol-noticias/privacy.html | URL pública |
 | **Site / suporte** | https://github.com/andrebadini/farol-noticias | URL pública |
 | **Pacote** | `farol-noticias.ehpk` | gerado por `npm run pack` |
@@ -105,7 +107,7 @@ npx evenhub update \
   --icon store/icon-24.png
 ```
 
-O `create` deixa o app em **Draft**; a publicação pública é feita no portal do Even Hub. O `pack` valida `app.json` (nome, package id, versão, entrypoint, permissões).
+O `create` deixa o app em **Draft**; a publicação pública é feita no portal do Even Hub. O `pack` valida `app.json` (nome, package id, versão, entrypoint, permissões). A checagem de disponibilidade do package id (`pack -c`) e o `create`/`upload` exigem `evenhub login`; sem sessão eles param com "Not authenticated".
 
 ## 8. Publicando pelo portal (interface web)
 

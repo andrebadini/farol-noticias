@@ -721,7 +721,12 @@ async function main() {
       summary: stripSourcePrefix(article.summary, SOURCES.find((source) => source.id === article.sourceId)?.short ?? ''),
       author: article.author || '',
       full: Boolean(article.content && article.content.length > 450),
-      content: article.content ? cleanArticleText(article.content) : '',
+      content: article.content
+        ? stripSourcePrefix(
+            cleanArticleText(article.content),
+            SOURCES.find((source) => source.id === article.sourceId)?.short ?? '',
+          )
+        : '',
     }
     const json = JSON.stringify(payload)
     bytes += json.length
