@@ -28,7 +28,7 @@ export function Header({ updatedAt, online, totalSources, savedCount, onSaved, o
           <BeaconMark size={22} />
         </span>
         <div className="topbar__word">
-          <span className="wordmark">Farol</span>
+          <span className="wordmark">Farolira</span>
           <span className="topbar__sub">notícias do Brasil</span>
         </div>
       </div>

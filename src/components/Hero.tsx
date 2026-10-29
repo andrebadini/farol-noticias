@@ -30,7 +30,7 @@ export function Hero({
       <div className="hero__kicker">
         <span className="kicker">
           <span className="kicker__dot" />
-          destaque do farol
+          destaque do dia
         </span>
         <span className="hero__when">{relativeTime(article.publishedAt)}</span>
       </div>

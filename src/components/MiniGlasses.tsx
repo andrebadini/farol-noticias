@@ -27,7 +27,7 @@ export function MiniGlasses({
     <div className="mini-glasses" role="img" aria-label="Prévia aproximada do que aparece nos óculos">
       <div className="mini-glasses__screen">
         <div className="mini-glasses__top">
-          <span>◈ FAROL</span>
+          <span>◈ FAROLIRA</span>
           <span>{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
         <div className="mini-glasses__topic">

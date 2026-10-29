@@ -138,7 +138,7 @@ export class GlassesUI {
                 itemCount: 1,
                 itemWidth: 560,
                 isItemSelectBorderEn: 1,
-                itemName: ['◈  Abrindo o Farol…'],
+                itemName: ['◈  Abrindo o Farolira…'],
               }),
             }),
           ],
@@ -272,11 +272,11 @@ export class GlassesUI {
     const meta = `${source?.name ?? article.sourceId} · ${relativeTime(article.publishedAt)} · leitura ${article.readingMin} min`
     const body =
       (article.content || article.summary || '').trim() ||
-      'Esta matéria ainda não tem texto completo no Farol. Abra a versão original no celular.'
+      'Esta matéria ainda não tem texto completo no Farolira. Abra a versão original no celular.'
     const note = article.full
       ? ''
-      : '\n\n(Resumo do Farol. A íntegra está disponível no site da fonte.)'
-    const text = `▌ ${article.title}\n\n${meta}\n\n${body}${note}\n\n— FAROL`
+      : '\n\n(Resumo do Farolira. A íntegra está disponível no site da fonte.)'
+    const text = `▌ ${article.title}\n\n${meta}\n\n${body}${note}\n\n— FAROLIRA`
     return paginate(text, { width: BODY_W, height: BODY_H })
   }
 
@@ -285,7 +285,7 @@ export class GlassesUI {
   }
 
   private brandLine(): string {
-    return `◈ FAROL  ·  ${clock(new Date().toISOString())}`
+    return `◈ FAROLIRA  ·  ${clock(new Date().toISOString())}`
   }
 
   private topicLine(): string {
@@ -518,7 +518,7 @@ export class GlassesUI {
     this.actions.push(() => this.renderSaved())
     items.push('◈  Como usar')
     this.actions.push(() => this.renderHelp())
-    items.push('×  Sair do Farol')
+    items.push('×  Sair do Farolira')
     this.actions.push(() => this.exit())
 
     const subtitle =
@@ -719,7 +719,7 @@ export class GlassesUI {
   private async renderHelp(): Promise<void> {
     if (!this.ready) return
     this.mode = 'help'
-    const help = `◈ FAROL — COMO USAR
+    const help = `◈ FAROLIRA — COMO USAR
 
 ▲ ▼  navegar e virar página
 ●    abrir a matéria
@@ -731,7 +731,7 @@ ${'─'.repeat(34)}
 No menu: atualizar, filtrar
 por fonte, salvar, ajuda e sair.
 
-O Farol atualiza sozinho a
+O app atualiza sozinho a
 cada 15 minutos. Gesto manual:
 2 toques → menu Atualizar.`
     this.pages = paginate(help, { width: BODY_W, height: BODY_H })

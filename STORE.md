@@ -1,4 +1,4 @@
-# Publicação no Even Hub — Farol Notícias 1.0.0
+# Publicação no Even Hub — Farolira 1.0.0
 
 Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com os textos prontos e os limites de cada campo.
 
@@ -6,7 +6,7 @@ Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com
 
 | Campo | Valor | Limite |
 |---|---|---|
-| **Nome** | `Farol Notícias` | 1–20 caracteres |
+| **Nome** | `Farolira` | 1–20 caracteres |
 | **Tagline / descrição curta** | `As notícias do Brasil, num olhar.` | 1–50 caracteres |
 | **Descrição da loja** | use [store/description-pt.txt](description-pt.txt) (ou [store/description-en.txt](description-en.txt)) | 1–2000 caracteres |
 | **Categoria** | Notícias / News & Magazines | — |
@@ -20,17 +20,17 @@ Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com
 | **Política de privacidade** | https://andrebadini.github.io/farol-noticias/privacy.html | URL pública |
 | **Site / suporte** | https://github.com/andrebadini/farol-noticias | URL pública |
 | **Pacote** | `farol-noticias.ehpk` | gerado por `npm run pack` |
-| **Package ID** | `com.andrebadini.farolnoticias` | reverse domain, minúsculo |
+| **Package ID** | `com.andrebadini.farolira` | reverse domain, minúsculo |
 
-> **Nome alternativo:** `Farol Noticias` (sem acento) caso o portal rejeite caracteres acentuados no nome. O resto do app continua em português.
+> **Nome verificado (28/10/2026):** `Farolira` — sem site, app, pacote npm ou repositório equivalente; `farolira.com`, `.com.br`, `.app` e `.io` estavam sem site ativo. Registre o domínio antes do lançamento, se quiser garantir a marca.
 
 ## 2. Descrição da loja (PT-BR)
 
-Copie de `store/description-pt.txt`. O texto tem 1.134 caracteres, dentro do limite de 2.000.
+Copie de `store/description-pt.txt`. O texto tem 1.124 caracteres, dentro do limite de 2.000.
 
 ## 3. Descrição da loja (EN)
 
-Copie de `store/description-en.txt` se o portal estiver em inglês. O texto tem 1.177 caracteres.
+Copie de `store/description-en.txt` se o portal estiver em inglês. O texto tem 1.173 caracteres.
 
 ## 4. Permissões
 
@@ -86,7 +86,7 @@ npx evenhub login
 # 2. crie o app e o build Draft (só na primeira vez)
 npx evenhub create farol-noticias.ehpk \
   --package-id com.andrebadini.farolnoticias \
-  --name "Farol Notícias" \
+  --name "Farolira" \
   --tagline "As notícias do Brasil, num olhar." \
   --description-file store/description-pt.txt \
   --icon store/icon-24.png
@@ -101,7 +101,7 @@ npx evenhub upload farol-noticias.ehpk
 # 5. ajuste textos/ícone de um app ainda em Draft
 npx evenhub update \
   --package-id com.andrebadini.farolnoticias \
-  --name "Farol Notícias" \
+  --name "Farolira" \
   --tagline "As notícias do Brasil, num olhar." \
   --description-file store/description-pt.txt \
   --icon store/icon-24.png
@@ -111,7 +111,7 @@ O `create` deixa o app em **Draft**; a publicação pública é feita no portal 
 
 ## 8. Publicando pelo portal (interface web)
 
-1. Acesse o portal de desenvolvedor do Even Hub e crie um app com o `package_id` `com.andrebadini.farolnoticias`.
+1. Acesse o portal de desenvolvedor do Even Hub e crie um app com o `package_id` `com.andrebadini.farolira`.
 2. Cole os campos da seção 1; use os textos de `store/description-pt.txt` e `store/description-en.txt`.
 3. Envie o ícone `store/icon-24.png` (o portal pode pedir também o `icon-1024.png`).
 4. Envie `farol-noticias.ehpk` como build.
@@ -136,5 +136,5 @@ O `create` deixa o app em **Draft**; a publicação pública é feita no portal 
 
 - O app é **em português**, mas `app.json` declara `supported_languages: ["en"]` porque a plataforma só aceita o conjunto `en, de, fr, es, it, zh, ja, ko`. Não há conteúdo em inglês na interface; os nomes dos veículos e as notícias são brasileiros.
 - O app não tem conta. O conteúdo é obtido de feeds RSS públicos e o snapshot é publicado por um workflow de 15 minutos no GitHub Actions.
-- O texto completo é exibido quando o veículo o publica no feed ou permite extração pública; caso contrário, o app mostra o resumo, identifica isso como **"Resumo do Farol"** e oferece o link original. Nunca contorna paywall.
+- O texto completo é exibido quando o veículo o publica no feed ou permite extração pública; caso contrário, o app mostra o resumo, identifica isso como **"Resumo do Farolira"** e oferece o link original. Nunca contorna paywall.
 - As notícias pertencem aos veículos; o app sempre exibe a fonte e o link. A política de privacidade e o README detalham o pipeline.

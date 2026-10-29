@@ -153,7 +153,7 @@ export function SearchView({
             <p>
               {voice.supported
                 ? 'O microfone do navegador está disponível. Se a permissão falhar, use o botão de ditado do teclado.'
-                : 'O WebView do Even Hub não libera o microfone para páginas. Toque no microfone do teclado do celular e dite a busca — o Farol entende igual.'}
+                : 'O WebView do Even Hub não libera o microfone para páginas. Toque no microfone do teclado do celular e dite a busca — a busca entende igual.'}
             </p>
           </div>
           {voiceHelp && (

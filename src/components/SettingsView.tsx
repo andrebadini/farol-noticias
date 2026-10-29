@@ -245,7 +245,7 @@ export function SettingsView({
         </div>
         {glasses.state === 'unavailable' && (
           <p className="settings-note">
-            Sem óculos por perto, o Farol segue funcionando aqui. Abra o app no Even Hub com o G2
+            Sem óculos por perto, o app segue funcionando aqui. Abra o app no Even Hub com o G2
             conectado para espelhar as matérias.
           </p>
         )}
@@ -273,7 +273,7 @@ export function SettingsView({
           onClick={async () => {
             if (!window.confirm('Limpar o cache de notícias? Seus salvos continuam guardados.')) return
             await onClearCache()
-            onToast('Cache limpo. O Farol vai buscar novidades.')
+            onToast('Cache limpo. O Farolira vai buscar novidades.')
           }}
         >
           <span className="setting-row__icon"><TrashIcon size={18} /></span>
@@ -291,7 +291,7 @@ export function SettingsView({
           <BookmarkIcon size={18} />
         </div>
         <p className="settings-note">
-          O Farol não tem login nem rastreamento. As notícias vêm de feeds públicos dos veículos;
+          O app não tem login nem rastreamento. As notícias vêm de feeds públicos dos veículos;
           favoritos e ajustes ficam no armazenamento do seu celular via Even Hub.
         </p>
       </div>
@@ -299,7 +299,7 @@ export function SettingsView({
       <footer className="about">
         <span className="about__mark" aria-hidden="true">◈</span>
         <div>
-          <strong>Farol Notícias</strong>
+          <strong>Farolira</strong>
           <span>versão 1.0.0 · feito para Even Realities G2</span>
           <button className="about__link" onClick={() => window.open('https://github.com/andrebadini/farol-noticias', '_blank', 'noopener')}>
             github.com/andrebadini/farol-noticias <ExternalIcon size={12} />

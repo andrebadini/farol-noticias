@@ -1,5 +1,5 @@
 /**
- * Farol Notícias — catálogo de fontes.
+ * Farolira — catálogo de fontes.
  *
  * Cada fonte tem um feed RSS/Atom público. O agregador roda no GitHub Actions
  * a cada 15 minutos, normaliza tudo e publica JSON estático no GitHub Pages

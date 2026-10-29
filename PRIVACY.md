@@ -1,8 +1,8 @@
-# Política de privacidade — Farol Notícias
+# Política de privacidade — Farolira
 
 **Última atualização:** 28 de outubro de 2026 · versão 1.0.0
 
-O Farol Notícias é um leitor de notícias para o celular e para os óculos **Even Realities G2**. Esta política explica, sem letra miúda, quais dados o app usa.
+O Farolira é um leitor de notícias para o celular e para os óculos **Even Realities G2**. Esta política explica, sem letra miúda, quais dados o app usa.
 
 ## Resumo
 
@@ -41,7 +41,7 @@ Quando a API não está disponível (situação comum no WebView do Even Hub), o
 
 ## Conteúdo de terceiros
 
-As notícias, títulos, resumos e textos pertencem aos veículos que os publicaram. O Farol apenas organiza feeds públicos, atribui a fonte e oferece o link para o original. Pedidos de correção ou remoção de conteúdo podem ser feitos em <https://github.com/andrebadini/farol-noticias/issues>.
+As notícias, títulos, resumos e textos pertencem aos veículos que os publicaram. O app apenas organiza feeds públicos, atribui a fonte e oferece o link para o original. Pedidos de correção ou remoção de conteúdo podem ser feitos em <https://github.com/andrebadini/farol-noticias/issues>.
 
 ## Crianças
 
@@ -60,4 +60,4 @@ Mudanças nesta política serão publicadas nesta página e no repositório do p
 
 ## Privacy policy (English summary)
 
-Farol Notícias is a news reader for the Even Realities G2 glasses and the phone. It has no account, no analytics, no ads and no tracking. It only performs GET requests to the public JSON snapshots at `andrebadini.github.io/farol-noticias/data/`; no user data is sent. Bookmarks, settings and caches are stored locally through the Even Hub storage and never leave the device. Voice search uses the WebView speech API only when available; otherwise the app asks you to use the keyboard dictation and never opens the microphone. News content belongs to the original publishers, and every article links back to the source. Contact: <https://github.com/andrebadini/farol-noticias/issues>.
+Farolira is a news reader for the Even Realities G2 glasses and the phone. It has no account, no analytics, no ads and no tracking. It only performs GET requests to the public JSON snapshots at `andrebadini.github.io/farol-noticias/data/`; no user data is sent. Bookmarks, settings and caches are stored locally through the Even Hub storage and never leave the device. Voice search uses the WebView speech API only when available; otherwise the app asks you to use the keyboard dictation and never opens the microphone. News content belongs to the original publishers, and every article links back to the source. Contact: <https://github.com/andrebadini/farol-noticias/issues>.

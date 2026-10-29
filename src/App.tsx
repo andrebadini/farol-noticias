@@ -267,7 +267,7 @@ export default function App() {
   const sendToGlasses = useCallback(
     async (meta: ArticleMeta) => {
       if (glassesStatus.state !== 'ready' || !glassesRef.current) {
-        showToast('Abra o Farol no Even Hub com os óculos G2 conectados.')
+        showToast('Abra o app no Even Hub com os óculos G2 conectados.')
         return
       }
       const full = (await fetchArticle(meta)) ?? { ...meta, content: meta.summary }

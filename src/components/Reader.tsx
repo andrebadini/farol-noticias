@@ -150,7 +150,7 @@ export function Reader({ meta, article, source, saved, fontScale, onFontScale, o
               <div>
                 <strong>Texto resumido</strong>
                 <p>
-                  Esta matéria chegou ao Farol apenas com o resumo. Abra a versão original para ler a
+                  Esta matéria chegou ao Farolira apenas com o resumo. Abra a versão original para ler a
                   íntegra no site do veículo.
                 </p>
               </div>

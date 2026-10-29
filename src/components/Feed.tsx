@@ -121,7 +121,7 @@ export function Feed({
       ) : (
         <div className="feed__end">
           <span className="feed__end-mark" aria-hidden="true">◈</span>
-          Você chegou ao fim da edição. O Farol se atualiza sozinho a cada 15 minutos.
+          Você chegou ao fim da edição. O app se atualiza sozinho a cada 15 minutos.
         </div>
       )}
     </section>
