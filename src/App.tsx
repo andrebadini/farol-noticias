@@ -58,10 +58,12 @@ function readRecent(): string[] {
 
 const HERO_CATEGORIES = new Set(['politica', 'economia', 'mundo', 'justica', 'cidades', 'ciencia', 'saude'])
 const LOW_SIGNAL = /(lotof[aá]cil|quina|mega-sena|lotomania|sorteio|resultado do|hor[oó]scopo|bbb|celebridade|fofoca)/i
+const HARD_NEWS = /(elei[çc][ãa]o|elei[çc][õo]es|governo|congresso|senado|c[âa]mara|stf|supremo|economia|d[óo]lar|juros|infla[çc][ãa]o|guerra|acordo|presidente|lula|bolsonaro|pol[íi]cia|crime|julgamento|pris[ãa]o|morte|acidente|greve|reforma|tarifa|ibovespa|ministro|deputado|senador|justi[çc]a|ataque|bomba|terremoto|cat[áa]strofe)/i
+const FEATURE = /(golfinhos|baleias|mirante|arquip[ée]lago|praia|viagem|turismo|curiosidade|natureza|fotos|imagens|v[íi]deo|p[ôo]r do sol|receita|restaurante|hotel|destino)/i
 
-/** Escolhe a manchete do topo: relevância editorial acima da rajada do feed. */
+/** Escolhe a manchete do topo: notícia dura e recente acima de curiosidade/feature. */
 function pickHero(articles: ArticleMeta[]): ArticleMeta | null {
-  const candidates = articles.slice(0, 40)
+  const candidates = articles.slice(0, 25)
   if (!candidates.length) return null
   let best = candidates[0]
   let bestScore = Number.NEGATIVE_INFINITY
@@ -69,11 +71,14 @@ function pickHero(articles: ArticleMeta[]): ArticleMeta | null {
     let score = 0
     if (HERO_CATEGORIES.has(article.category)) score += 3
     if (article.category === 'geral') score += 1
-    if (article.full) score += 1.2
-    score += Math.min(2, article.readingMin * 0.25)
+    if (article.full) score += 1
+    score += Math.min(1, article.readingMin * 0.1)
+    if (HARD_NEWS.test(article.title)) score += 2.5
+    if (FEATURE.test(article.title)) score -= 5
+    if (article.title.length > 130) score -= 1.5
     if (LOW_SIGNAL.test(article.title)) score -= 6
     const ageHours = Math.max(0, (Date.now() - Date.parse(article.publishedAt)) / 3_600_000)
-    score -= ageHours * 0.12
+    score -= Math.min(3, ageHours * 0.05)
     if (score > bestScore) {
       best = article
       bestScore = score
