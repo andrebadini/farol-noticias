@@ -2,6 +2,7 @@ import type { SavedIndexEntry, SourceInfo } from '../types'
 import { ArticleRow } from './ArticleRow'
 import { EmptyArt } from './Art'
 import { BookmarkIcon, CheckIcon, GlassesIcon, SignalIcon } from './Icons'
+import { t } from '../lib/i18n'
 
 export function SavedView({
   saved,
@@ -19,34 +20,34 @@ export function SavedView({
   return (
     <section className="saved">
       <header className="page-title">
-        <span className="eyebrow">seu recorte</span>
-        <h1>Salvos</h1>
+        <span className="eyebrow">{t('seu recorte')}</span>
+        <h1>{t('Salvos')}</h1>
         <p>
           {saved.length > 0
-            ? `${saved.length} ${saved.length === 1 ? 'matéria guardada' : 'matérias guardadas'} no seu celular — leia quando quiser, mesmo sem sinal.`
-            : 'Guarde o que quer ler depois. Fica no celular e também no menu dos óculos.'}
+            ? t(saved.length === 1 ? '{n} matéria guardada no seu celular — leia quando quiser, mesmo sem sinal.' : '{n} matérias guardadas no seu celular — leia quando quiser, mesmo sem sinal.', { n: saved.length })
+            : t('Guarde o que quer ler depois. Fica no celular e também no menu dos óculos.')}
         </p>
       </header>
 
       {saved.length === 0 ? (
         <div className="empty empty--saved">
           <EmptyArt />
-          <h2>Seu farol pessoal começa aqui</h2>
+          <h2>{t('Seu farol pessoal começa aqui')}</h2>
           <p>
-            Toque no marcador de uma matéria para salvá-la. No G2, dois toques abrem o menu e
-            <strong> ★ Salvar</strong>.
+            {t('Toque no marcador de uma matéria para salvá-la. No G2, dois toques abrem o menu e')}{' '}
+            <strong>★ {t('Salvar')}</strong>.
           </p>
           <button className="btn btn--ink" onClick={onExplore}>
             <SignalIcon size={17} />
-            Explorar a edição
+            {t('Explorar a edição')}
           </button>
         </div>
       ) : (
         <>
           <div className="saved__chips">
-            <span className="meta-chip"><BookmarkIcon size={14} /> offline</span>
-            <span className="meta-chip"><GlassesIcon size={14} /> nos óculos</span>
-            <span className="meta-chip"><CheckIcon size={14} /> sem login</span>
+            <span className="meta-chip"><BookmarkIcon size={14} /> {t('offline')}</span>
+            <span className="meta-chip"><GlassesIcon size={14} /> {t('nos óculos')}</span>
+            <span className="meta-chip"><CheckIcon size={14} /> {t('sem login')}</span>
           </div>
           <div className="feed__list feed__list--saved">
             {saved.map((entry) => (
@@ -63,7 +64,7 @@ export function SavedView({
           </div>
           <div className="saved__foot">
             <span aria-hidden="true">◈</span>
-            Salvo no armazenamento do Even Hub — não some ao fechar o app.
+            {t('Salvo no armazenamento do Even Hub — não some ao fechar o app.')}
           </div>
         </>
       )}

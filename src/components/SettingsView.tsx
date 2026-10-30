@@ -1,6 +1,7 @@
 import type { ArticleMeta, LatestPayload, SavedIndexEntry, Settings, SourceInfo } from '../types'
 import { DATA_ENDPOINT } from '../lib/api'
 import { generatedLabel } from '../lib/time'
+import { resolveLanguage, t } from '../lib/i18n'
 import type { GlassesStatus } from '../lib/glasses'
 import { MiniGlasses } from './MiniGlasses'
 import {
@@ -69,31 +70,65 @@ export function SettingsView({
 }) {
   const statusLabel =
     glasses.state === 'ready'
-      ? 'óculos conectados'
+      ? t('óculos conectados')
       : glasses.state === 'connecting'
-        ? 'procurando óculos…'
+        ? t('procurando óculos…')
         : glasses.state === 'error'
-          ? 'não foi possível falar com os óculos'
-          : 'modo navegador'
+          ? t('não foi possível falar com os óculos')
+          : t('modo navegador')
+  const detected = resolveLanguage('auto')
+  const languageHint =
+    settings.language === 'auto'
+      ? t(detected === 'pt' ? 'Detectado: Português' : 'Detectado: English')
+      : settings.language === 'pt'
+        ? 'Português'
+        : 'English'
 
   const battery = typeof glasses.battery === 'number' ? `${glasses.battery}%` : null
 
   return (
     <section className="settings">
       <header className="page-title">
-        <span className="eyebrow">seu farol, do seu jeito</span>
-        <h1>Ajustes</h1>
-        <p>Controle a edição, o tamanho da leitura e o que aparece nos óculos.</p>
+        <span className="eyebrow">{t('seu farol, do seu jeito')}</span>
+        <h1>{t('Ajustes')}</h1>
+        <p>{t('Controle a edição, o tamanho da leitura e o que aparece nos óculos.')}</p>
       </header>
 
       <div className="settings-card">
         <div className="settings-card__head">
-          <h2>Leitura</h2>
-          <span className="settings-card__hint">vale para o celular</span>
+          <h2>{t('Idioma')}</h2>
+          <span className="settings-card__hint">{languageHint}</span>
+        </div>
+        <div className="setting-row setting-row--stack">
+          <span className="setting-row__label">{t('Idioma do app')}</span>
+          <div className="segmented segmented--three">
+            {[
+              { id: 'auto' as const, label: t('Automático') },
+              { id: 'pt' as const, label: 'Português' },
+              { id: 'en' as const, label: 'English' },
+            ].map(({ id, label }) => (
+              <button
+                key={id}
+                className={`segmented__item ${settings.language === id ? 'is-active' : ''}`}
+                onClick={() => onChange({ language: id })}
+                aria-pressed={settings.language === id}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+          <span className="setting-row__desc">{t('Interface do app. As notícias continuam em português.')}</span>
+        </div>
+      </div>
+
+      <div className="settings-card">
+        <div className="settings-card__head">
+          <h2>{t('Leitura')}</h2>
+          <span className="settings-card__hint">{t('vale para o celular')}</span>
         </div>
 
         <div className="setting-row setting-row--stack">
-          <span className="setting-row__label">Aparência</span>
+          <span className="setting-row__label">{t('Aparência')}</span>
           <div className="segmented segmented--three">
             {THEMES.map(({ id, label, icon: Icon }) => (
               <button
@@ -103,7 +138,7 @@ export function SettingsView({
                 aria-pressed={settings.theme === id}
               >
                 <Icon size={16} />
-                {label}
+                {t(label)}
               </button>
             ))}
           </div>
@@ -111,20 +146,20 @@ export function SettingsView({
 
         <div className="setting-row">
           <div>
-            <span className="setting-row__label">Tamanho do texto</span>
-            <span className="setting-row__desc">No leitor de matérias</span>
+            <span className="setting-row__label">{t('Tamanho do texto')}</span>
+            <span className="setting-row__desc">{t('No leitor de matérias')}</span>
           </div>
           <div className="font-stepper">
             <button
               onClick={() => onChange({ fontScale: Math.max(0.9, Number((settings.fontScale - 0.06).toFixed(2))) })}
-              aria-label="Diminuir texto"
+              aria-label={t('Diminuir texto')}
             >
               A−
             </button>
             <span>{Math.round(settings.fontScale * 100)}%</span>
             <button
               onClick={() => onChange({ fontScale: Math.min(1.3, Number((settings.fontScale + 0.06).toFixed(2))) })}
-              aria-label="Aumentar texto"
+              aria-label={t('Aumentar texto')}
             >
               A+
             </button>
@@ -133,8 +168,8 @@ export function SettingsView({
 
         <div className="setting-row">
           <div>
-            <span className="setting-row__label">Dicas de uso</span>
-            <span className="setting-row__desc">Atalhos para os gestos dos óculos</span>
+            <span className="setting-row__label">{t('Dicas de uso')}</span>
+            <span className="setting-row__desc">{t('Atalhos para os gestos dos óculos')}</span>
           </div>
           <button
             className={`switch ${settings.showTips ? 'is-on' : ''}`}
@@ -149,12 +184,12 @@ export function SettingsView({
 
       <div className="settings-card">
         <div className="settings-card__head">
-          <h2>Atualização</h2>
-          <span className="settings-card__hint">servidor a cada 15 min</span>
+          <h2>{t('Atualização')}</h2>
+          <span className="settings-card__hint">{t('servidor a cada 15 min')}</span>
         </div>
 
         <div className="setting-row setting-row--stack">
-          <span className="setting-row__label">Buscar novidades a cada</span>
+          <span className="setting-row__label">{t('Buscar novidades a cada')}</span>
           <div className="segmented segmented--four">
             {INTERVALS.map(({ value, label }) => (
               <button
@@ -163,7 +198,7 @@ export function SettingsView({
                 onClick={() => onChange({ refreshMinutes: value })}
                 aria-pressed={settings.refreshMinutes === value}
               >
-                {label}
+                {t(label)}
               </button>
             ))}
           </div>
@@ -171,28 +206,28 @@ export function SettingsView({
 
         <div className="setting-row">
           <div>
-            <span className="setting-row__label">Edição atual</span>
+            <span className="setting-row__label">{t('Edição atual')}</span>
             <span className="setting-row__desc">
-              {latest ? generatedLabel(latest.generatedAt) : 'carregando'} · {latest?.total ?? 0} matérias
+              {latest ? generatedLabel(latest.generatedAt) : t('carregando')} · {t('{n} matérias', { n: latest?.total ?? 0 })}
             </span>
           </div>
           <button className="btn btn--soft btn--sm" onClick={onRefresh} disabled={refreshing}>
             <RefreshIcon size={15} className={refreshing ? 'spin' : ''} />
-            Atualizar
+            {t('Atualizar')}
           </button>
         </div>
       </div>
 
       <div className="settings-card">
         <div className="settings-card__head">
-          <h2>Fontes</h2>
-          <span className="settings-card__hint">{enabledCount} de {totalSources} ativas</span>
+          <h2>{t('Fontes')}</h2>
+          <span className="settings-card__hint">{t('{n} de {total} ativas', { n: enabledCount, total: totalSources })}</span>
         </div>
         <button className="setting-row setting-row--button" onClick={onOpenSources}>
           <span className="setting-row__icon"><SlidersIcon size={19} /></span>
           <span className="setting-row__grow">
-            <span className="setting-row__label">Escolher veículos</span>
-            <span className="setting-row__desc">G1, Folha, Valor, Crusoé, Intercept e mais</span>
+            <span className="setting-row__label">{t('Escolher veículos')}</span>
+            <span className="setting-row__desc">{t('G1, Folha, Valor, Crusoé, Intercept e mais')}</span>
           </span>
           <ChevronRightIcon size={18} />
         </button>
@@ -202,7 +237,7 @@ export function SettingsView({
           ))}
           <span className="source-preview__more">+{Math.max(0, totalSources - 9)}</span>
           <span className="source-preview__text">
-            {enabledCount < totalSources ? 'você está com um recorte' : 'edição completa'}
+            {t(enabledCount < totalSources ? 'você está com um recorte' : 'edição completa')}
           </span>
         </div>
       </div>
@@ -225,44 +260,43 @@ export function SettingsView({
         />
 
         <div className="gesture-grid">
-          <div><kbd>▲</kbd><span>Deslizar</span><small>navegar / virar página</small></div>
-          <div><kbd>●</kbd><span>1 toque</span><small>abrir a matéria</small></div>
-          <div><kbd>●●</kbd><span>2 toques</span><small>menu de ações</small></div>
-          <div><kbd>↻</kbd><span>Atualizar</span><small>2 toques → Atualizar</small></div>
+          <div><kbd>▲</kbd><span>{t('Deslizar')}</span><small>{t('navegar / virar página')}</small></div>
+          <div><kbd>●</kbd><span>{t('1 toque')}</span><small>{t('abrir a matéria')}</small></div>
+          <div><kbd>●●</kbd><span>{t('2 toques')}</span><small>{t('menu de ações')}</small></div>
+          <div><kbd>↻</kbd><span>{t('Atualizar')}</span><small>{t('2 toques → Atualizar')}</small></div>
         </div>
 
         <div className="glasses-actions">
           <button className="btn btn--soft btn--sm" onClick={onSendTop}>
             <GlassesIcon size={16} />
-            Enviar a manchete
+            {t('Enviar a manchete')}
           </button>
           <button
             className="btn btn--ghost btn--sm"
-            onClick={() => onToast('No celular, use o botão “Ler nos óculos” dentro de qualquer matéria.')}
+            onClick={() => onToast(t('No celular, use o botão “Ler nos óculos” dentro de qualquer matéria.'))}
           >
-            Como funciona
+            {t('Como funciona')}
           </button>
         </div>
         {glasses.state === 'unavailable' && (
           <p className="settings-note">
-            Sem óculos por perto, o app segue funcionando aqui. Abra o app no Even Hub com o G2
-            conectado para espelhar as matérias.
+            {t('Sem óculos por perto, o app segue funcionando aqui. Abra o app no Even Hub com o G2 conectado para espelhar as matérias.')}
           </p>
         )}
       </div>
 
       <div className="settings-card">
         <div className="settings-card__head">
-          <h2>Dados e privacidade</h2>
+          <h2>{t('Dados e privacidade')}</h2>
         </div>
         <div className="setting-row">
           <div>
-            <span className="setting-row__label">Snapshots de notícias</span>
+            <span className="setting-row__label">{t('Snapshots de notícias')}</span>
             <span className="setting-row__desc data-endpoint">{DATA_ENDPOINT.replace('https://', '')}</span>
           </div>
           <button
             className="icon-btn icon-btn--soft"
-            aria-label="Abrir endpoint de dados"
+            aria-label={t('Abrir endpoint de dados')}
             onClick={() => window.open(`${DATA_ENDPOINT}/latest.json`, '_blank', 'noopener')}
           >
             <ExternalIcon size={17} />
@@ -271,28 +305,27 @@ export function SettingsView({
         <button
           className="setting-row setting-row--button"
           onClick={async () => {
-            if (!window.confirm('Limpar o cache de notícias? Seus salvos continuam guardados.')) return
+            if (!window.confirm(t('Limpar o cache de notícias? Seus salvos continuam guardados.'))) return
             await onClearCache()
-            onToast('Cache limpo. O Farolira vai buscar novidades.')
+            onToast(t('Cache limpo. O Farolira vai buscar novidades.'))
           }}
         >
           <span className="setting-row__icon"><TrashIcon size={18} /></span>
           <span className="setting-row__grow">
-            <span className="setting-row__label">Limpar cache</span>
-            <span className="setting-row__desc">Mantém os salvos no celular</span>
+            <span className="setting-row__label">{t('Limpar cache')}</span>
+            <span className="setting-row__desc">{t('Mantém os salvos no celular')}</span>
           </span>
           <ChevronRightIcon size={18} />
         </button>
         <div className="setting-row">
           <div>
-            <span className="setting-row__label">Salvos offline</span>
-            <span className="setting-row__desc">{saved.length === 1 ? '1 matéria guardada' : `${saved.length} matérias guardadas`} no Even Hub</span>
+            <span className="setting-row__label">{t('Salvos offline')}</span>
+            <span className="setting-row__desc">{t(saved.length === 1 ? '{n} matéria guardada' : '{n} matérias guardadas', { n: saved.length })} {t('no Even Hub')}</span>
           </div>
           <BookmarkIcon size={18} />
         </div>
         <p className="settings-note">
-          O app não tem login nem rastreamento. As notícias vêm de feeds públicos dos veículos;
-          favoritos e ajustes ficam no armazenamento do seu celular via Even Hub.
+          {t('O app não tem login nem rastreamento. As notícias vêm de feeds públicos dos veículos; favoritos e ajustes ficam no armazenamento do seu celular via Even Hub.')}
         </p>
       </div>
 
@@ -300,7 +333,7 @@ export function SettingsView({
         <span className="about__mark" aria-hidden="true">◈</span>
         <div>
           <strong>Farolira</strong>
-          <span>versão 1.0.1 · feito para Even Realities G2</span>
+          <span>{t('versão 1.1.0 · feito para Even Realities G2')}</span>
           <button className="about__link" onClick={() => window.open('https://github.com/andrebadini/farol-noticias', '_blank', 'noopener')}>
             github.com/andrebadini/farol-noticias <ExternalIcon size={12} />
           </button>

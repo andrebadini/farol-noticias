@@ -4,6 +4,7 @@ import { relativeTime } from '../lib/time'
 import { BookmarkFilledIcon, BookmarkIcon, GlassesIcon } from './Icons'
 import { SignalArt } from './Art'
 import { SourceBadge } from './SourceBadge'
+import { t } from '../lib/i18n'
 
 export function Hero({
   article,
@@ -30,7 +31,7 @@ export function Hero({
       <div className="hero__kicker">
         <span className="kicker">
           <span className="kicker__dot" />
-          destaque do dia
+          {t('destaque do dia')}
         </span>
         <span className="hero__when">{relativeTime(article.publishedAt)}</span>
       </div>
@@ -45,14 +46,14 @@ export function Hero({
         <SourceBadge source={source} size="sm" />
         <span className="hero__source">{source?.name ?? article.sourceId}</span>
         <span className="dot" aria-hidden="true" />
-        <span className="hero__cat">{category.name}</span>
+        <span className="hero__cat">{t(category.name)}</span>
         <span className="dot" aria-hidden="true" />
-        <span>{article.readingMin} min</span>
+        <span>{t('{n} min', { n: article.readingMin })}</span>
         <button
           className={`hero__save ${saved ? 'is-saved' : ''}`}
           onClick={onToggleSave}
           aria-pressed={saved}
-          aria-label={saved ? 'Remover dos salvos' : 'Salvar matéria'}
+          aria-label={t(saved ? 'Remover dos salvos' : 'Salvar matéria')}
         >
           {saved ? <BookmarkFilledIcon size={19} /> : <BookmarkIcon size={19} />}
         </button>
@@ -60,12 +61,12 @@ export function Hero({
 
       <div className="hero__actions">
         <button className="btn btn--ink" onClick={onOpen}>
-          Ler a matéria
+          {t('Ler a matéria')}
           <span className="btn__arrow" aria-hidden="true">→</span>
         </button>
         <button className="btn btn--ghost" onClick={onGlasses}>
           <GlassesIcon size={18} />
-          Nos óculos
+          {t('Nos óculos')}
         </button>
       </div>
     </section>

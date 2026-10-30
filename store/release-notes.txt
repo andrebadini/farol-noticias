@@ -1,3 +1,10 @@
+1.1.0 — interface em português e inglês
+
+• Idioma do app em português ou inglês, com modo automático pelo idioma do celular.
+• Seletor de idioma nos Ajustes do celular e atalho no menu dos óculos.
+• Notícias continuam no idioma dos veículos (português); a interface, os menus, as dicas e os avisos são traduzidos.
+• Inclui as correções do 1.0.1: volta à lista pelo menu dos óculos e busca de texto completo.
+
 1.0.1 — navegação e texto completo
 
 • Corrige a volta à lista inicial pelos óculos: o menu da matéria agora tem “Últimas notícias” e o duplo toque no menu leva à lista.

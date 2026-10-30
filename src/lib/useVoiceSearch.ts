@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { currentLanguage, t } from './i18n'
 
 interface RecognitionAlternative {
   transcript: string
@@ -71,7 +72,7 @@ export function useVoiceSearch(onFinal: (text: string) => void) {
     recognitionRef.current?.abort()
 
     const recognition = new Ctor()
-    recognition.lang = 'pt-BR'
+    recognition.lang = currentLanguage() === 'pt' ? 'pt-BR' : 'en-US'
     recognition.continuous = false
     recognition.interimResults = true
     recognition.maxAlternatives = 1
@@ -96,13 +97,13 @@ export function useVoiceSearch(onFinal: (text: string) => void) {
     recognition.onerror = (event) => {
       setListening(false)
       const map: Record<string, string> = {
-        'not-allowed': 'Permissão do microfone negada. Use o ditado do teclado.',
-        'service-not-allowed': 'O microfone não está disponível neste WebView. Use o ditado do teclado.',
-        'no-speech': 'Não ouvi nada. Tente de novo.',
-        'audio-capture': 'Nenhum microfone encontrado.',
-        network: 'Sem conexão para reconhecer a voz.',
+        'not-allowed': t('Permissão do microfone negada. Use o ditado do teclado.'),
+        'service-not-allowed': t('O microfone não está disponível neste WebView. Use o ditado do teclado.'),
+        'no-speech': t('Não ouvi nada. Tente de novo.'),
+        'audio-capture': t('Nenhum microfone encontrado.'),
+        network: t('Sem conexão para reconhecer a voz.'),
       }
-      setError(map[event.error] ?? 'Não foi possível ouvir. Tente de novo.')
+      setError(map[event.error] ?? t('Não foi possível ouvir. Tente de novo.'))
     }
     recognition.onend = () => {
       setListening(false)
@@ -116,7 +117,7 @@ export function useVoiceSearch(onFinal: (text: string) => void) {
       recognition.start()
       return true
     } catch {
-      setError('Não foi possível iniciar o microfone.')
+      setError(t('Não foi possível iniciar o microfone.'))
       setListening(false)
       return false
     }

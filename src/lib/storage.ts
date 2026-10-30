@@ -125,6 +125,7 @@ export async function loadLatestCache(): Promise<LatestPayload | null> {
 /* ------------------------------------------------------------- settings ---- */
 
 export const DEFAULT_SETTINGS: Settings = {
+  language: 'auto',
   theme: 'system',
   refreshMinutes: 15,
   fontScale: 1,
@@ -140,6 +141,10 @@ export async function loadSettings(): Promise<Settings> {
     return {
       ...DEFAULT_SETTINGS,
       ...parsed,
+      language:
+        parsed.language === 'pt' || parsed.language === 'en' || parsed.language === 'auto'
+          ? parsed.language
+          : DEFAULT_SETTINGS.language,
       enabledSources: Array.isArray(parsed.enabledSources) ? parsed.enabledSources : null,
     }
   } catch {

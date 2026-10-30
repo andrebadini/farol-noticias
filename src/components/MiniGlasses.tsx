@@ -1,4 +1,5 @@
 import type { ArticleMeta, SourceInfo } from '../types'
+import { currentLanguage, t } from '../lib/i18n'
 
 function cut(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text
@@ -24,14 +25,14 @@ export function MiniGlasses({
     })
     .slice(0, 4)
   return (
-    <div className="mini-glasses" role="img" aria-label="Prévia aproximada do que aparece nos óculos">
+    <div className="mini-glasses" role="img" aria-label={t('Prévia aproximada do que aparece nos óculos')}>
       <div className="mini-glasses__screen">
         <div className="mini-glasses__top">
           <span>◈ FAROLIRA</span>
-          <span>{new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+          <span>{new Date().toLocaleTimeString(currentLanguage() === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
         <div className="mini-glasses__topic">
-          {(filterName ?? 'TUDO').toUpperCase()} · {total} NOTÍCIAS
+          {(filterName ?? t('TUDO')).toUpperCase()} · {t('{n} NOTÍCIAS', { n: total })}
         </div>
         <div className="mini-glasses__list">
           {items.length ? (
@@ -42,12 +43,12 @@ export function MiniGlasses({
               </div>
             ))
           ) : (
-            <div className="mini-glasses__empty">◈ Sem notícias agora — 2× para atualizar</div>
+            <div className="mini-glasses__empty">{t('◈  Sem notícias agora — 2× para atualizar')}</div>
           )}
         </div>
-        <div className="mini-glasses__hint">▲▼ rolar · ● abrir · 2× menu</div>
+        <div className="mini-glasses__hint">{t('▲▼ rolar  ·  ● abrir  ·  2× menu')}</div>
       </div>
-      <span className="mini-glasses__caption">prévia aproximada do visor · 576 × 288</span>
+      <span className="mini-glasses__caption">{t('prévia aproximada do visor · 576 × 288')}</span>
     </div>
   )
 }

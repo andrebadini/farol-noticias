@@ -5,6 +5,7 @@ import { useVoiceSearch } from '../lib/useVoiceSearch'
 import { ArticleRow } from './ArticleRow'
 import { EmptyArt } from './Art'
 import { CloseIcon, MicIcon, SearchIcon, SparkIcon } from './Icons'
+import { t } from '../lib/i18n'
 
 function normalize(text: string): string {
   return text
@@ -74,9 +75,9 @@ export function SearchView({
   return (
     <section className="search">
       <header className="page-title">
-        <span className="eyebrow">em todas as fontes</span>
-        <h1>Buscar</h1>
-        <p>Procure por tema, veículo ou palavra-chave. Fale ou escreva.</p>
+        <span className="eyebrow">{t('em todas as fontes')}</span>
+        <h1>{t('Buscar')}</h1>
+        <p>{t('Procure por tema, veículo ou palavra-chave. Fale ou escreva.')}</p>
       </header>
 
       <form
@@ -93,13 +94,13 @@ export function SearchView({
           type="search"
           value={query}
           onChange={(event) => onQuery(event.target.value)}
-          placeholder="Ex.: eleições, dólar, Amazônia…"
-          aria-label="Buscar notícias"
+          placeholder={t('Ex.: eleições, dólar, Amazônia…')}
+          aria-label={t('Buscar notícias')}
           autoComplete="off"
           enterKeyHint="search"
         />
         {query && (
-          <button type="button" className="searchbox__clear" onClick={() => onQuery('')} aria-label="Limpar busca">
+          <button type="button" className="searchbox__clear" onClick={() => onQuery('')} aria-label={t('Limpar busca')}>
             <CloseIcon size={16} />
           </button>
         )}
@@ -117,7 +118,7 @@ export function SearchView({
               inputRef.current?.focus()
             }
           }}
-          aria-label={voice.listening ? 'Parar de ouvir' : 'Buscar por voz'}
+          aria-label={t(voice.listening ? 'Parar de ouvir' : 'Buscar por voz')}
           aria-pressed={voice.listening}
         >
           <MicIcon size={20} />
@@ -131,17 +132,17 @@ export function SearchView({
             <MicIcon size={20} />
           </div>
           <div>
-            <strong>Ouvindo…</strong>
-            <p>{voice.interim || 'Fale o tema da busca.'}</p>
+            <strong>{t('Ouvindo…')}</strong>
+            <p>{voice.interim || t('Fale o tema da busca.')}</p>
           </div>
-          <button className="btn btn--ghost btn--sm" onClick={voice.stop}>Parar</button>
+          <button className="btn btn--ghost btn--sm" onClick={voice.stop}>{t('Parar')}</button>
         </div>
       )}
 
       {voice.error && voice.error !== 'unsupported' && (
         <div className="inline-alert" role="alert">
           <span>{voice.error}</span>
-          <button onClick={voice.clearError} aria-label="Fechar aviso"><CloseIcon size={14} /></button>
+          <button onClick={voice.clearError} aria-label={t('Fechar aviso')}><CloseIcon size={14} /></button>
         </div>
       )}
 
@@ -149,15 +150,15 @@ export function SearchView({
         <div className="voice-tip">
           <span className="voice-tip__mark"><MicIcon size={17} /></span>
           <div>
-            <strong>Voz no bolso</strong>
+            <strong>{t('Voz no bolso')}</strong>
             <p>
               {voice.supported
-                ? 'O microfone do navegador está disponível. Se a permissão falhar, use o botão de ditado do teclado.'
-                : 'O WebView do Even Hub não libera o microfone para páginas. Toque no microfone do teclado do celular e dite a busca — a busca entende igual.'}
+                ? t('O microfone do navegador está disponível. Se a permissão falhar, use o botão de ditado do teclado.')
+                : t('O WebView do Even Hub não libera o microfone para páginas. Toque no microfone do teclado do celular e dite a busca — a busca entende igual.')}
             </p>
           </div>
           {voiceHelp && (
-            <button className="voice-tip__close" onClick={() => setVoiceHelp(false)} aria-label="Fechar dica">
+            <button className="voice-tip__close" onClick={() => setVoiceHelp(false)} aria-label={t('Fechar dica')}>
               <CloseIcon size={14} />
             </button>
           )}
@@ -167,7 +168,7 @@ export function SearchView({
       {query.trim().length < 2 ? (
         <>
           <div className="search-section">
-            <span className="eyebrow">sugestões</span>
+            <span className="eyebrow">{t('sugestões')}</span>
             <div className="suggestion-list">
               {SEARCH_SUGGESTIONS.map((suggestion) => (
                 <button key={suggestion} className="suggestion" onClick={() => submit(suggestion)}>
@@ -181,8 +182,8 @@ export function SearchView({
           {recent.length > 0 && (
             <div className="search-section">
               <div className="search-section__head">
-                <span className="eyebrow">buscas recentes</span>
-                <button className="link-btn" onClick={onClearRecent}>limpar</button>
+                <span className="eyebrow">{t('buscas recentes')}</span>
+                <button className="link-btn" onClick={onClearRecent}>{t('limpar')}</button>
               </div>
               <div className="recent-list">
                 {recent.map((term) => (
@@ -198,8 +199,7 @@ export function SearchView({
           <div className="search-note">
             <span aria-hidden="true">◈</span>
             <p>
-              A busca roda na edição carregada no seu celular — {articles.length} matérias das
-              principais fontes do Brasil. Sem enviar sua pesquisa para ninguém.
+              {t('A busca roda na edição carregada no seu celular — {n} matérias das principais fontes do Brasil. Sem enviar sua pesquisa para ninguém.', { n: articles.length })}
             </p>
           </div>
         </>
@@ -207,7 +207,7 @@ export function SearchView({
         <div className="search-results">
           <div className="search-results__head">
             <span className="eyebrow">
-              {results.length} {results.length === 1 ? 'resultado' : 'resultados'}
+              {t(results.length === 1 ? '{n} resultado' : '{n} resultados', { n: results.length })}
             </span>
             <span className="search-results__term">“{query.trim()}”</span>
           </div>
@@ -215,9 +215,9 @@ export function SearchView({
           {results.length === 0 ? (
             <div className="empty empty--compact">
               <EmptyArt />
-              <h2>Nada encontrado</h2>
-              <p>Tente uma palavra mais curta, o nome do veículo ou outro tema.</p>
-              <button className="btn btn--ghost" onClick={() => onQuery('')}>Limpar busca</button>
+              <h2>{t('Nada encontrado')}</h2>
+              <p>{t('Tente uma palavra mais curta, o nome do veículo ou outro tema.')}</p>
+              <button className="btn btn--ghost" onClick={() => onQuery('')}>{t('Limpar busca')}</button>
             </div>
           ) : (
             <div className="feed__list">

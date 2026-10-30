@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import type { SourceInfo } from '../types'
 import { CheckIcon, CloseIcon, SignalIcon } from './Icons'
 import { SourceBadge } from './SourceBadge'
+import { t } from '../lib/i18n'
 
 export function SourceSheet({
   sources,
@@ -42,11 +43,11 @@ export function SourceSheet({
         <div className="sheet__grip" aria-hidden="true" />
         <header className="sheet__head">
           <div>
-            <span className="eyebrow">monte seu farol</span>
-            <h2 id="sources-title">Suas fontes</h2>
-            <p>O recorte vale para o celular e para a lista nos óculos.</p>
+            <span className="eyebrow">{t('monte seu farol')}</span>
+            <h2 id="sources-title">{t('Suas fontes')}</h2>
+            <p>{t('O recorte vale para o celular e para a lista nos óculos.')}</p>
           </div>
-          <button className="icon-btn icon-btn--round" onClick={onClose} aria-label="Fechar">
+          <button className="icon-btn icon-btn--round" onClick={onClose} aria-label={t('Fechar')}>
             <CloseIcon size={19} />
           </button>
         </header>
@@ -54,8 +55,8 @@ export function SourceSheet({
         <button className={`source-row source-row--all ${all ? 'is-on' : ''}`} onClick={onAll}>
           <span className="source-row__all"><SignalIcon size={18} /></span>
           <span className="source-row__grow">
-            <strong>Todas as fontes</strong>
-            <span>{sources.length} veículos · edição completa</span>
+            <strong>{t('Todas as fontes')}</strong>
+            <span>{t('{n} veículos · edição completa', { n: sources.length })}</span>
           </span>
           <span className={`check ${all ? 'is-on' : ''}`}>{all && <CheckIcon size={14} />}</span>
         </button>
@@ -69,8 +70,8 @@ export function SourceSheet({
                 <span className="source-row__grow">
                   <strong>{source.name}</strong>
                   <span>
-                    {source.kind} · {source.tag}
-                    {!source.ok && <em className="source-row__off"> fora do ar</em>}
+                    {t(source.kind)} · {t(source.tag)}
+                    {!source.ok && <em className="source-row__off"> {t('fora do ar')}</em>}
                   </span>
                 </span>
                 <span className="source-row__count">{source.count}</span>
@@ -82,10 +83,9 @@ export function SourceSheet({
 
         <footer className="sheet__foot">
           <p>
-            <strong>{enabled.size}</strong> de {sources.length} fontes ativas. As escolhas ficam
-            salvas no celular.
+            {t('{n} de {total} fontes ativas. As escolhas ficam salvas no celular.', { n: enabled.size, total: sources.length })}
           </p>
-          <button className="btn btn--ink btn--sm" onClick={onClose}>Pronto</button>
+          <button className="btn btn--ink btn--sm" onClick={onClose}>{t('Pronto')}</button>
         </footer>
       </div>
     </div>

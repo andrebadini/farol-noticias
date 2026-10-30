@@ -12,6 +12,7 @@ import type { ArticleFull, ArticleMeta, SavedIndexEntry, SourceInfo } from '../t
 import { getBridge } from './bridge'
 import { paginate } from './paginate'
 import { clock, relativeTime } from './time'
+import { currentLanguage, t, type Lang } from './i18n'
 
 export type GlassesState = 'connecting' | 'ready' | 'unavailable' | 'error'
 
@@ -43,6 +44,7 @@ export interface GlassesDeps {
   refresh: () => Promise<void>
   onStatus: (status: GlassesStatus) => void
   onSession: (snapshot: GlassesSnapshot) => void
+  setLanguageSetting: (lang: Lang) => void
 }
 
 const W = 576
@@ -104,7 +106,7 @@ export class GlassesUI {
     this.deps.onStatus({ state: 'connecting' })
     const bridge = await getBridge()
     if (!bridge) {
-      this.deps.onStatus({ state: 'unavailable', message: 'Modo navegador — sem óculos conectados' })
+      this.deps.onStatus({ state: 'unavailable', message: t('Modo navegador — sem óculos conectados') })
       return
     }
     this.bridge = bridge
@@ -126,7 +128,7 @@ export class GlassesUI {
             new TextContainerProperty({
               xPosition: 0, yPosition: 252, width: W, height: 36,
               paddingLength: 4, containerID: 4, containerName: 'hint',
-              textColor: DIM, content: '▲▼ rolar  ·  ● abrir  ·  2× menu', isEventCapture: 0,
+              textColor: DIM, content: t('▲▼ rolar  ·  ● abrir  ·  2× menu'), isEventCapture: 0,
             }),
           ],
           listObject: [
@@ -138,7 +140,7 @@ export class GlassesUI {
                 itemCount: 1,
                 itemWidth: 560,
                 isItemSelectBorderEn: 1,
-                itemName: ['◈  Abrindo o Farolira…'],
+                itemName: [t('◈  Abrindo o Farolira…')],
               }),
             }),
           ],
@@ -158,7 +160,7 @@ export class GlassesUI {
       }, 60_000)
       this.renderHome()
     } catch (error) {
-      this.deps.onStatus({ state: 'error', message: error instanceof Error ? error.message : 'falha ao iniciar' })
+      this.deps.onStatus({ state: 'error', message: error instanceof Error ? error.message : t('falha ao iniciar') })
       this.ready = false
     }
   }
@@ -254,6 +256,33 @@ export class GlassesUI {
     else if (this.mode === 'saved') void this.renderSaved()
   }
 
+  async setLanguage(): Promise<void> {
+    if (!this.ready) return
+    if (this.mode === 'article' && this.current) {
+      this.pages = this.paginateArticle(this.current)
+      this.page = Math.min(this.page, this.pages.length - 1)
+      await this.renderArticle()
+      return
+    }
+    if (this.mode === 'actions') {
+      await this.showActions(this.previousMode)
+      return
+    }
+    if (this.mode === 'sources') {
+      await this.renderSources()
+      return
+    }
+    if (this.mode === 'saved') {
+      await this.renderSaved()
+      return
+    }
+    if (this.mode === 'help') {
+      await this.renderHelp()
+      return
+    }
+    await this.renderHome()
+  }
+
   async showArticle(meta: ArticleMeta): Promise<void> {
     const article = (await this.deps.loadArticle(meta)) ?? { ...meta, content: meta.summary }
     this.current = article
@@ -269,13 +298,13 @@ export class GlassesUI {
 
   private paginateArticle(article: ArticleFull): string[] {
     const source = this.sourceFor(article.sourceId)
-    const meta = `${source?.name ?? article.sourceId} · ${relativeTime(article.publishedAt)} · leitura ${article.readingMin} min`
+    const meta = `${source?.name ?? article.sourceId} · ${relativeTime(article.publishedAt)} · ${t('{n} min de leitura', { n: article.readingMin })}`
     const body =
       (article.content || article.summary || '').trim() ||
-      'Esta matéria ainda não tem texto completo no Farolira. Abra a versão original no celular.'
+      t('Esta matéria ainda não tem texto completo no Farolira. Abra a versão original no celular.')
     const note = article.full
       ? ''
-      : '\n\n(Resumo do Farolira. A íntegra está disponível no site da fonte.)'
+      : `\n\n${t('(Resumo do Farolira. A íntegra está disponível no site da fonte.)')}`
     const text = `▌ ${article.title}\n\n${meta}\n\n${body}${note}\n\n— FAROLIRA`
     return paginate(text, { width: BODY_W, height: BODY_H })
   }
@@ -291,14 +320,14 @@ export class GlassesUI {
   private topicLine(): string {
     if (this.notice) return this.notice
     const filtered = this.filter ? this.sourceFor(this.filter)?.name ?? this.filter : 'tudo'
-    const filterLabel = filtered === 'tudo' ? 'TUDO' : filtered.toUpperCase()
-    return `${filterLabel} · ${this.feed.length} NOTÍCIAS`
+    const filterLabel = filtered === 'tudo' ? t('TUDO') : filtered.toUpperCase()
+    return `${filterLabel} · ${t('{n} NOTÍCIAS', { n: this.feed.length })}`
   }
 
   private listItems(): string[] {
     if (!this.feed.length) {
       this.homeArticles = []
-      return ['◈  Sem notícias agora — 2× para atualizar']
+      return [t('◈  Sem notícias agora — 2× para atualizar')]
     }
     // Diversidade: no máximo 2 manchetes por veículo nas 20 primeiras, para a
     // home não virar um feed de uma fonte só quando ela publica em rajada.
@@ -378,7 +407,7 @@ export class GlassesUI {
           new TextContainerProperty({
             xPosition: 0, yPosition: 252, width: W, height: 36,
             paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: '▲▼ rolar  ·  ● abrir  ·  2× menu', isEventCapture: 0,
+            textColor: DIM, content: t('▲▼ rolar  ·  ● abrir  ·  2× menu'), isEventCapture: 0,
           }),
         ],
         listObject: [
@@ -440,7 +469,7 @@ export class GlassesUI {
   }
 
   private footerLine(): string {
-    const tail = this.mode === 'help' ? '● voltar' : '● ações'
+    const tail = `● ${t(this.mode === 'help' ? 'voltar' : 'ações')}`
     return `${this.page + 1}/${this.pages.length}  ${bar(this.page, this.pages.length)}  ${tail}`
   }
 
@@ -503,34 +532,36 @@ export class GlassesUI {
     this.actions = []
 
     if (from === 'article' && this.current) {
-      items.push('◈  Últimas notícias')
+      items.push(t('◈  Últimas notícias'))
       this.actions.push(() => this.renderHome())
       const isSaved = this.saved.some((entry) => entry.id === this.current!.id)
-      items.push(isSaved ? '★  Remover dos salvos' : '☆  Salvar matéria')
+      items.push(t(isSaved ? '★  Remover dos salvos' : '☆  Salvar matéria'))
       this.actions.push(() => this.toggleCurrentSave())
-      items.push('◀  Voltar à leitura')
+      items.push(t('◀  Voltar à leitura'))
       this.actions.push(() => this.renderArticle())
       if (!this.current.full) {
-        items.push('◈  Buscar texto completo')
+        items.push(t('◈  Buscar texto completo'))
         this.actions.push(() => this.tryFullText())
       }
     }
 
-    items.push('▶  Atualizar notícias')
+    items.push(t('▶  Atualizar notícias'))
     this.actions.push(() => this.manualRefresh())
-    items.push('▷  Filtrar por fonte')
+    items.push(t('▷  Filtrar por fonte'))
     this.actions.push(() => this.renderSources())
-    items.push('★  Matérias salvas')
+    items.push(t('★  Matérias salvas'))
     this.actions.push(() => this.renderSaved())
-    items.push('◈  Como usar')
+    items.push(`◈  ${currentLanguage() === 'pt' ? 'English' : 'Português'}`)
+    this.actions.push(() => this.deps.setLanguageSetting(currentLanguage() === 'pt' ? 'en' : 'pt'))
+    items.push(t('◈  Como usar'))
     this.actions.push(() => this.renderHelp())
-    items.push('×  Sair do Farolira')
+    items.push(t('×  Sair do Farolira'))
     this.actions.push(() => this.exit())
 
     const subtitle =
       from === 'article' && this.current
         ? cut(this.current.title, 48)
-        : `${this.feed.length} matérias · atualize ou filtre`
+        : t('{n} matérias · atualize ou filtre', { n: this.feed.length })
 
     await this.rebuild(
       new RebuildPageContainer({
@@ -539,7 +570,7 @@ export class GlassesUI {
           new TextContainerProperty({
             xPosition: 0, yPosition: 0, width: W, height: 35,
             paddingLength: 4, containerID: 1, containerName: 'title',
-            textColor: BRIGHT, content: 'MENU', isEventCapture: 0,
+            textColor: BRIGHT, content: t('MENU'), isEventCapture: 0,
           }),
           new TextContainerProperty({
             xPosition: 0, yPosition: 35, width: W, height: 35,
@@ -549,7 +580,7 @@ export class GlassesUI {
           new TextContainerProperty({
             xPosition: 0, yPosition: 252, width: W, height: 36,
             paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: '▲▼ rolar  ·  ● escolher  ·  2× lista', isEventCapture: 0,
+            textColor: DIM, content: t('▲▼ rolar  ·  ● escolher  ·  2× lista'), isEventCapture: 0,
           }),
         ],
         listObject: [
@@ -571,7 +602,7 @@ export class GlassesUI {
 
   private async tryFullText(): Promise<void> {
     if (!this.current) return
-    await this.upgradeText(2, 'subtitle', 'Buscando texto completo…')
+    await this.upgradeText(2, 'subtitle', t('Buscando texto completo…'))
     const full = await this.deps.loadArticle(this.current, true)
     const previousLength = this.current.content?.length ?? 0
     if (full?.content && (full.full || full.content.length > previousLength + 150)) {
@@ -581,27 +612,27 @@ export class GlassesUI {
       await this.renderArticle()
       return
     }
-    await this.upgradeText(2, 'subtitle', 'Ainda só temos o resumo — abra no celular')
+    await this.upgradeText(2, 'subtitle', t('Ainda só temos o resumo — abra no celular'))
   }
 
   private async toggleCurrentSave(): Promise<void> {
     if (!this.current) return
     const saved = await this.deps.toggleSave(this.current)
     this.saved = this.deps.getSaved()
-    this.notice = saved ? '★ SALVO NO CELULAR' : '☆ REMOVIDO DOS SALVOS'
+    this.notice = t(saved ? '★ SALVO NO CELULAR' : '☆ REMOVIDO DOS SALVOS')
     await this.showActions('article')
     this.scheduleNoticeClear()
   }
 
   private async manualRefresh(): Promise<void> {
     const wasArticle = this.previousMode === 'article' && this.current
-    this.notice = '↻ ATUALIZANDO…'
+    this.notice = t('↻ ATUALIZANDO…')
     if (this.mode === 'home') await this.upgradeText(2, 'topic', this.notice)
     try {
       await this.deps.refresh()
-      this.notice = 'OK · ATUALIZADO AGORA'
+      this.notice = t('OK · ATUALIZADO AGORA')
     } catch {
-      this.notice = '! SEM CONEXÃO — TENTE DE NOVO'
+      this.notice = t('! SEM CONEXÃO — TENTE DE NOVO')
     }
     this.feed = this.deps.getFeed()
     this.saved = this.deps.getSaved()
@@ -622,7 +653,7 @@ export class GlassesUI {
     if (!this.ready) return
     this.mode = 'sources'
     const list = this.topSources()
-    const items = ['●  Todas as fontes', ...list.map((source) => `${this.filter === source.id ? '●' : '○'}  ${source.name} · ${source.count}`)]
+    const items = [t('●  Todas as fontes'), ...list.map((source) => `${this.filter === source.id ? '●' : '○'}  ${source.name} · ${source.count}`)]
     await this.rebuild(
       new RebuildPageContainer({
         containerTotalNum: 4,
@@ -630,17 +661,17 @@ export class GlassesUI {
           new TextContainerProperty({
             xPosition: 0, yPosition: 0, width: W, height: 35,
             paddingLength: 4, containerID: 1, containerName: 'title',
-            textColor: BRIGHT, content: 'FONTES', isEventCapture: 0,
+            textColor: BRIGHT, content: t('FONTES'), isEventCapture: 0,
           }),
           new TextContainerProperty({
             xPosition: 0, yPosition: 35, width: W, height: 35,
             paddingLength: 4, containerID: 2, containerName: 'subtitle',
-            textColor: DIM, content: this.filter ? `filtrando: ${this.sourceFor(this.filter)?.name ?? this.filter}` : 'mostrando todas as fontes', isEventCapture: 0,
+            textColor: DIM, content: this.filter ? t('filtrando: {source}', { source: this.sourceFor(this.filter)?.name ?? this.filter }) : t('mostrando todas as fontes'), isEventCapture: 0,
           }),
           new TextContainerProperty({
             xPosition: 0, yPosition: 252, width: W, height: 36,
             paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: '▲▼ rolar  ·  ● filtrar  ·  2× voltar', isEventCapture: 0,
+            textColor: DIM, content: t('▲▼ rolar  ·  ● filtrar  ·  2× voltar'), isEventCapture: 0,
           }),
         ],
         listObject: [
@@ -665,7 +696,15 @@ export class GlassesUI {
     this.mode = 'saved'
     if (!this.saved.length) {
       this.pages = paginate(
-        'NADA SALVO AINDA\n\nAbra uma matéria e toque\nem ★ Salvar (no menu).\n\nFica no seu celular, mesmo\noffline.',
+        [
+          t('NADA SALVO AINDA'),
+          '',
+          t('Abra uma matéria e toque'),
+          t('em ★ Salvar (no menu).'),
+          '',
+          t('Fica no seu celular, mesmo'),
+          t('offline.'),
+        ].join('\n'),
         { width: BODY_W, height: BODY_H },
       )
       this.page = 0
@@ -681,7 +720,7 @@ export class GlassesUI {
             new TextContainerProperty({
               xPosition: 0, yPosition: 242, width: W, height: 46,
               paddingLength: 6, containerID: 2, containerName: 'pager',
-              textColor: DIM, content: '★ salvos  ·  ● voltar', isEventCapture: 0,
+              textColor: DIM, content: t('★ salvos  ·  ● voltar'), isEventCapture: 0,
             }),
           ],
         }),
@@ -699,17 +738,17 @@ export class GlassesUI {
           new TextContainerProperty({
             xPosition: 0, yPosition: 0, width: W, height: 35,
             paddingLength: 4, containerID: 1, containerName: 'title',
-            textColor: BRIGHT, content: `★ SALVOS · ${this.saved.length}`, isEventCapture: 0,
+            textColor: BRIGHT, content: t('★ SALVOS · {n}', { n: this.saved.length }), isEventCapture: 0,
           }),
           new TextContainerProperty({
             xPosition: 0, yPosition: 35, width: W, height: 35,
             paddingLength: 4, containerID: 2, containerName: 'subtitle',
-            textColor: DIM, content: 'guardados no seu celular', isEventCapture: 0,
+            textColor: DIM, content: t('guardados no seu celular'), isEventCapture: 0,
           }),
           new TextContainerProperty({
             xPosition: 0, yPosition: 252, width: W, height: 36,
             paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: '▲▼ rolar  ·  ● abrir  ·  2× voltar', isEventCapture: 0,
+            textColor: DIM, content: t('▲▼ rolar  ·  ● abrir  ·  2× voltar'), isEventCapture: 0,
           }),
         ],
         listObject: [
@@ -732,21 +771,23 @@ export class GlassesUI {
   private async renderHelp(): Promise<void> {
     if (!this.ready) return
     this.mode = 'help'
-    const help = `◈ FAROLIRA — COMO USAR
-
-▲ ▼  navegar e virar página
-●    abrir a matéria
-●●   2 toques: menu de ações
-2× em matéria abre o menu
-
-${'─'.repeat(34)}
-
-No menu: atualizar, filtrar
-por fonte, salvar, ajuda e sair.
-
-O app atualiza sozinho a
-cada 15 minutos. Gesto manual:
-2 toques → menu Atualizar.`
+    const help = [
+      t('◈ FAROLIRA — COMO USAR'),
+      '',
+      t('▲ ▼  navegar e virar página'),
+      t('●    abrir a matéria'),
+      t('●●   2 toques: menu de ações'),
+      t('2× em matéria abre o menu'),
+      '',
+      '─'.repeat(34),
+      '',
+      t('No menu: atualizar, filtrar'),
+      t('por fonte, salvar, ajuda e sair.'),
+      '',
+      t('O app atualiza sozinho a'),
+      t('cada 15 minutos. Gesto manual:'),
+      t('2 toques → menu Atualizar.'),
+    ].join('\n')
     this.pages = paginate(help, { width: BODY_W, height: BODY_H })
     this.page = 0
     await this.rebuild(
@@ -761,7 +802,7 @@ cada 15 minutos. Gesto manual:
           new TextContainerProperty({
             xPosition: 0, yPosition: 242, width: W, height: 46,
             paddingLength: 6, containerID: 2, containerName: 'pager',
-            textColor: DIM, content: `${this.page + 1}/${this.pages.length}  ${bar(this.page, this.pages.length)}  ● voltar`, isEventCapture: 0,
+            textColor: DIM, content: `${this.page + 1}/${this.pages.length}  ${bar(this.page, this.pages.length)}  ● ${t('voltar')}`, isEventCapture: 0,
           }),
         ],
       }),

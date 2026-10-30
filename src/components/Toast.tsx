@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { CheckIcon, CloseIcon } from './Icons'
+import { t } from '../lib/i18n'
 
 export interface ToastMessage {
   id: number
@@ -44,7 +45,7 @@ export function Toast({ toast, onDismiss }: { toast: ToastMessage | null; onDism
           setVisible(false)
           dismissRef.current()
         }}
-        aria-label="Fechar aviso"
+        aria-label={t('Fechar aviso')}
       >
         <CloseIcon size={13} />
       </button>

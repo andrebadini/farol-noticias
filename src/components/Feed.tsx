@@ -3,6 +3,7 @@ import type { ArticleMeta, SourceInfo } from '../types'
 import { ArticleRow } from './ArticleRow'
 import { EmptyArt } from './Art'
 import { RefreshIcon, SparkIcon } from './Icons'
+import { t } from '../lib/i18n'
 
 const PAGE = 30
 
@@ -46,24 +47,24 @@ export function Feed({
     return (
       <div className="empty">
         <EmptyArt />
-        <h2>{hasFilters ? 'Nada com esse filtro' : 'O farol está sem sinal'}</h2>
+        <h2>{t(hasFilters ? 'Nada com esse filtro' : 'O farol está sem sinal')}</h2>
         <p>
           {hasFilters
-            ? 'Nenhuma matéria corresponde às fontes e categorias escolhidas. Tente abrir um pouco o olhar.'
-            : 'Não conseguimos falar com o serviço de notícias. Verifique a conexão e tente de novo.'}
+            ? t('Nenhuma matéria corresponde às fontes e categorias escolhidas. Tente abrir um pouco o olhar.')
+            : t('Não conseguimos falar com o serviço de notícias. Verifique a conexão e tente de novo.')}
         </p>
         <div className="empty__actions">
           {hasFilters ? (
-            <button className="btn btn--ink" onClick={onResetFilters}>Limpar filtros</button>
+            <button className="btn btn--ink" onClick={onResetFilters}>{t('Limpar filtros')}</button>
           ) : (
             <button className="btn btn--ink" onClick={onRefresh} disabled={refreshing}>
               <RefreshIcon size={17} className={refreshing ? 'spin' : ''} />
-              Tentar de novo
+              {t('Tentar de novo')}
             </button>
           )}
           <button className="btn btn--ghost" onClick={onOpenSources}>
             <SparkIcon size={17} />
-            Escolher fontes
+            {t('Escolher fontes')}
           </button>
         </div>
       </div>
@@ -73,19 +74,19 @@ export function Feed({
   const shown = articles.slice(0, visible)
 
   return (
-    <section className="feed" aria-label="Últimas notícias">
+    <section className="feed" aria-label={t('Últimas notícias')}>
       <div className="section-head">
         <div>
-          <span className="eyebrow">a edição de agora</span>
-          <h2 className="section-head__title">Últimas</h2>
+          <span className="eyebrow">{t('a edição de agora')}</span>
+          <h2 className="section-head__title">{t('Últimas')}</h2>
         </div>
         <div className="section-head__right">
-          <span className="section-head__count">{articles.length} matérias</span>
+          <span className="section-head__count">{t('{n} matérias', { n: articles.length })}</span>
           <button
             className="icon-btn icon-btn--soft"
             onClick={onRefresh}
             disabled={refreshing}
-            aria-label="Atualizar notícias"
+            aria-label={t('Atualizar notícias')}
           >
             <RefreshIcon size={18} className={refreshing ? 'spin' : ''} />
           </button>
@@ -94,9 +95,9 @@ export function Feed({
 
       <div className="feed__freshness" aria-live="polite">
         <span className={`live-dot ${onlineSources < totalSources ? 'is-warm' : ''}`} />
-        {onlineSources}/{totalSources} fontes no ar
+        {t('{online}/{total} fontes no ar', { online: onlineSources, total: totalSources })}
         <span className="dot" />
-        {refreshing ? 'buscando agora…' : updatedAt}
+        {refreshing ? t('buscando agora…') : updatedAt}
       </div>
 
       <div className="feed__list">
@@ -115,13 +116,13 @@ export function Feed({
 
       {visible < articles.length ? (
         <button className="load-more" onClick={() => setVisible((n) => n + PAGE)}>
-          Carregar mais
-          <span>{Math.min(PAGE, articles.length - visible)} restantes</span>
+          {t('Carregar mais')}
+          <span>{t('{n} restantes', { n: Math.min(PAGE, articles.length - visible) })}</span>
         </button>
       ) : (
         <div className="feed__end">
           <span className="feed__end-mark" aria-hidden="true">◈</span>
-          Você chegou ao fim da edição. O app se atualiza sozinho a cada 15 minutos.
+          {t('Você chegou ao fim da edição. O app se atualiza sozinho a cada 15 minutos.')}
         </div>
       )}
     </section>

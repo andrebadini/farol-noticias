@@ -1,6 +1,7 @@
 import type { CategoryId } from '../types'
 import { CATEGORY_META, CATEGORY_ORDER } from '../data/meta'
 import { CloseIcon, SlidersIcon } from './Icons'
+import { t } from '../lib/i18n'
 
 interface FilterBarProps {
   category: CategoryId | 'tudo'
@@ -27,14 +28,14 @@ export function FilterBar({
 }: FilterBarProps) {
   return (
     <div className="filters">
-      <div className="filters__scroll" role="tablist" aria-label="Categorias">
+      <div className="filters__scroll" role="tablist" aria-label={t('Categorias')}>
         <button
           role="tab"
           aria-selected={category === 'tudo'}
           className={`chip ${category === 'tudo' ? 'is-active' : ''}`}
           onClick={() => onCategory('tudo')}
         >
-          Tudo
+          {t('Tudo')}
           <span className="chip__count">{counts.get('tudo') ?? 0}</span>
         </button>
         {CATEGORY_ORDER.filter((id) => (counts.get(id) ?? 0) > 0).map((id) => {
@@ -50,14 +51,14 @@ export function FilterBar({
               <span className="chip__glyph" style={{ color: category === id ? 'var(--accent-ink)' : meta.hue }}>
                 {meta.glyph}
               </span>
-              {meta.name}
+              {t(meta.name)}
             </button>
           )
         })}
       </div>
 
       {sourceFilter && sourceName ? (
-        <button className="source-chip" onClick={onClearSource} aria-label={`Remover filtro de ${sourceName}`}>
+        <button className="source-chip" onClick={onClearSource} aria-label={t('Remover filtro de {source}', { source: sourceName })}>
           <span>{sourceName}</span>
           <CloseIcon size={14} />
         </button>
@@ -65,11 +66,11 @@ export function FilterBar({
         <button
           className={`source-chip source-chip--open ${enabledCount < totalSources ? 'is-filtered' : ''}`}
           onClick={onOpenSources}
-          aria-label="Filtrar por fontes"
+          aria-label={t('Filtrar por fontes')}
         >
           <SlidersIcon size={16} />
           <span>
-            {enabledCount < totalSources ? `${enabledCount}/${totalSources}` : 'Fontes'}
+            {enabledCount < totalSources ? `${enabledCount}/${totalSources}` : t('Fontes')}
           </span>
         </button>
       )}

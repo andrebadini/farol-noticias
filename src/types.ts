@@ -72,10 +72,13 @@ export interface SavedIndexEntry extends ArticleMeta {
   savedAt: number
 }
 
+import type { LanguageSetting } from './lib/i18n'
+
 export type ThemeMode = 'system' | 'light' | 'dark'
 export type TabId = 'agora' | 'buscar' | 'salvos' | 'ajustes'
 
 export interface Settings {
+  language: LanguageSetting
   theme: ThemeMode
   refreshMinutes: number
   fontScale: number

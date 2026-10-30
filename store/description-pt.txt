@@ -9,3 +9,5 @@ Salve uma matéria no celular ou nos óculos: o texto vai junto e fica disponív
 Sem login, sem anúncios, sem rastreamento. As notícias pertencem aos veículos; o app sempre mostra a fonte e o link original.
 
 Um farol para não se perder no noticiário.
+
+Interface em português e inglês: o app detecta o idioma do celular ou você escolhe nos Ajustes. As notícias continuam no idioma dos veículos.

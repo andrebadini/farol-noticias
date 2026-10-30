@@ -25,6 +25,7 @@ import {
 import { fetchArticle, fetchLatest } from './lib/api'
 import { GlassesUI, type GlassesSnapshot, type GlassesStatus } from './lib/glasses'
 import { generatedLabel } from './lib/time'
+import { resolveLanguage, setActiveLanguage, t } from './lib/i18n'
 import { Header } from './components/Header'
 import { Ticker } from './components/Ticker'
 import { FilterBar } from './components/FilterBar'
@@ -174,6 +175,8 @@ export default function App() {
     sourceFilter !== null ||
     (settings.enabledSources !== null && settings.enabledSources.length < sources.length)
   const sourceName = sourceFilter ? (sourceMap.get(sourceFilter)?.name ?? sourceFilter) : null
+  const lang = resolveLanguage(settings.language)
+  setActiveLanguage(lang)
 
   feedRef.current = feed
   sourcesRef.current = sources
@@ -202,17 +205,19 @@ export default function App() {
         setOrigin(result.origin)
         if (manual) {
           if (result.origin.kind === 'none') {
-            showToast('Sem conexão. Mostrando o que já está salvo.')
+            showToast(t('Sem conexão. Mostrando o que já está salvo.'))
           } else {
             const diff = before ? result.payload.total - before.total : 0
             showToast(
-              diff > 0 ? `${diff} ${diff === 1 ? 'matéria nova' : 'matérias novas'} na edição` : 'Edição já está atualizada',
+              diff > 0
+                ? t(diff === 1 ? '{n} matéria nova na edição' : '{n} matérias novas na edição', { n: diff })
+                : t('Edição já está atualizada'),
               diff > 0 ? 'accent' : 'default',
             )
           }
         }
       } catch {
-        if (manual) showToast('Não foi possível atualizar agora. Tente de novo.')
+        if (manual) showToast(t('Não foi possível atualizar agora. Tente de novo.'))
       } finally {
         if (manual) setRefreshing(false)
       }
@@ -230,7 +235,7 @@ export default function App() {
         const next = current.filter((entry) => entry.id !== article.id)
         savedRef.current = next
         setSaved(next)
-        showToast('Removido dos salvos')
+        showToast(t('Removido dos salvos'))
         return false
       }
       const full = await fetchArticle(article)
@@ -240,7 +245,7 @@ export default function App() {
       const next = [entry, ...savedRef.current.filter((item) => item.id !== article.id)]
       savedRef.current = next
       setSaved(next)
-      showToast('Salvo no seu celular', 'accent')
+      showToast(t('Salvo no seu celular'), 'accent')
       return true
     },
     [showToast],
@@ -282,18 +287,18 @@ export default function App() {
       if (improved && full) return { ...prev, article: full, loading: false, retrying: false }
       return { ...prev, retrying: false }
     })
-    showToast(improved ? 'Texto completo carregado' : 'Ainda só temos o resumo. Abra o original.', improved ? 'accent' : 'default')
+    showToast(t(improved ? 'Texto completo carregado' : 'Ainda só temos o resumo. Abra o original.'), improved ? 'accent' : 'default')
   }, [reader, showToast])
 
   const sendToGlasses = useCallback(
     async (meta: ArticleMeta) => {
       if (glassesStatus.state !== 'ready' || !glassesRef.current) {
-        showToast('Abra o app no Even Hub com os óculos G2 conectados.')
+        showToast(t('Abra o app no Even Hub com os óculos G2 conectados.'))
         return
       }
       const full = (await fetchArticle(meta)) ?? { ...meta, content: meta.summary }
       await glassesRef.current.showArticle(full)
-      showToast('No visor: matéria aberta', 'accent')
+      showToast(t('No visor: matéria aberta'), 'accent')
     },
     [glassesStatus.state, showToast],
   )
@@ -304,7 +309,7 @@ export default function App() {
       const current = settingsRef.current.enabledSources ?? allIds
       const next = current.includes(id) ? current.filter((item) => item !== id) : [...current, id]
       if (next.length === 0) {
-        showToast('Mantenha pelo menos uma fonte ativa.')
+        showToast(t('Mantenha pelo menos uma fonte ativa.'))
         return
       }
       if (sourceFilter === id && !next.includes(id)) setSourceFilter(null)
@@ -422,6 +427,7 @@ export default function App() {
         }
       },
       onSession: (snapshot) => persistSession(snapshot),
+      setLanguageSetting: (language) => updateSettings({ language }),
     })
     glassesRef.current = ui
     void ui.init()
@@ -467,6 +473,22 @@ export default function App() {
       }
     })()
   }, [glassesStatus.state, latest, restored])
+
+  /* idioma -------------------------------------------------------------- */
+  useEffect(() => {
+    document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en'
+    document.title = lang === 'pt' ? 'Farolira · Notícias do Brasil' : 'Farolira · Brazil news'
+    const meta = document.querySelector('meta[name="description"]')
+    if (meta) {
+      meta.setAttribute(
+        'content',
+        lang === 'pt'
+          ? 'Farolira — as notícias do Brasil no celular e nos óculos Even Realities G2.'
+          : 'Farolira — Brazil’s news on your phone and Even Realities G2 glasses.',
+      )
+    }
+    void glassesRef.current?.setLanguage()
+  }, [lang])
 
   /* tema ---------------------------------------------------------------- */
   useEffect(() => {
@@ -574,7 +596,7 @@ export default function App() {
 
   return (
     <div className="app">
-      <a className="skip-link" href="#conteudo">Pular para o conteúdo</a>
+      <a className="skip-link" href="#conteudo">{t('Pular para o conteúdo')}</a>
 
       <Header
         updatedAt={latest?.generatedAt ?? ''}
@@ -608,8 +630,8 @@ export default function App() {
         {origin.kind === 'cache' && tab === 'agora' && (
           <div className="offline-banner" role="status">
             <WifiOffIcon size={17} />
-            <span>Sem sinal agora. Esta é a última edição guardada no celular.</span>
-            <button onClick={() => void refresh(true)}>Tentar</button>
+            <span>{t('Sem sinal agora. Esta é a última edição guardada no celular.')}</span>
+            <button onClick={() => void refresh(true)}>{t('Tentar')}</button>
           </div>
         )}
 
@@ -620,14 +642,11 @@ export default function App() {
             ) : latest && latest.total === 0 ? (
               <div className="empty">
                 <EmptyArt />
-                <h2>O farol ainda não acendeu</h2>
-                <p>
-                  Não recebemos a edição de hoje. Verifique sua conexão e puxe a atualização — o
-                  serviço publica notícias a cada 15 minutos.
-                </p>
+                <h2>{t('O farol ainda não acendeu')}</h2>
+                <p>{t('Não recebemos a edição de hoje. Verifique sua conexão e puxe a atualização — o serviço publica notícias a cada 15 minutos.')}</p>
                 <button className="btn btn--ink" onClick={() => void refresh(true)} disabled={refreshing}>
                   <RefreshIcon size={17} className={refreshing ? 'spin' : ''} />
-                  Buscar a edição
+                  {t('Buscar a edição')}
                 </button>
               </div>
             ) : (
@@ -645,14 +664,14 @@ export default function App() {
 
                 {hasFilters && (
                   <div className="filter-summary">
-                    <span className="eyebrow">seu recorte</span>
+                    <span className="eyebrow">{t('seu recorte')}</span>
                     <h1>
-                      {currentCategory ? currentCategory.name : sourceName ?? 'Edição'}
+                      {currentCategory ? t(currentCategory.name) : sourceName ?? t('Edição')}
                       <span>{sourceName && currentCategory ? ` · ${sourceName}` : ''}</span>
                     </h1>
                     <div className="filter-summary__row">
-                      <span>{feed.length} matérias</span>
-                      <button className="link-btn" onClick={resetFilters}>limpar filtros</button>
+                      <span>{t('{n} matérias', { n: feed.length })}</span>
+                      <button className="link-btn" onClick={resetFilters}>{t('limpar filtros')}</button>
                     </div>
                   </div>
                 )}
@@ -749,7 +768,7 @@ export default function App() {
             onSendTop={() => {
               const top = feed[0] ?? latest?.articles[0]
               if (top) void sendToGlasses(top)
-              else showToast('Ainda não há manchete para enviar.')
+              else showToast(t('Ainda não há manchete para enviar.'))
             }}
             onToast={showToast}
           />

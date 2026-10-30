@@ -1,4 +1,4 @@
-# Publicação no Even Hub — Farolira 1.0.1
+# Publicação no Even Hub — Farolira 1.1.0
 
 Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com os textos prontos e os limites de cada campo.
 
@@ -12,9 +12,9 @@ Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com
 | **Categoria** | Notícias / News & Magazines | — |
 | **Ícone (CLI / portal 24×24)** | [store/icon-24.png](icon-24.png) | PNG 24×24, pixels visíveis #F4F4F4 em blocos 2×2 |
 | **Ícone grande (se o portal pedir)** | [store/icon-1024.png](icon-1024.png) | PNG quadrado |
-| **Idioma da interface** | Português (Brasil) | — |
+| **Idioma da interface** | Português (Brasil) e English; automático pelo idioma do celular ou escolha manual | — |
 | **País / região** | Brasil | — |
-| **Versão** | `1.0.1` | semver |
+| **Versão** | `1.1.0` | semver |
 | **min_app_version** | `2.2.10` | exigido pelo SDK 0.0.16 |
 | **min_sdk_version** | `0.0.16` | SDK usado no build |
 | **Política de privacidade** | https://andrebadini.github.io/farol-noticias/privacy.html | URL pública |
@@ -134,7 +134,9 @@ O `create` deixa o app em **Draft**; a publicação pública é feita no portal 
 
 ## 10. Observações para o revisor
 
-- O app é **em português**, mas `app.json` declara `supported_languages: ["en"]` porque a plataforma só aceita o conjunto `en, de, fr, es, it, zh, ja, ko`. Não há conteúdo em inglês na interface; os nomes dos veículos e as notícias são brasileiros.
+- A interface é **português + English**. O modo `Automático` usa `navigator.language`/`languages` do WebView (o SDK do Even Hub não expõe idioma do sistema; `UserInfo` só tem `country`). Há seleção manual nos Ajustes e um atalho no menu dos óculos.
+- As **notícias continuam em português** (idioma dos veículos); a interface, menus, filtros, dicas e avisos são traduzidos. Alguns veículos podem ter edições em inglês, mas o Farolira não as agrega nesta versão.
+- `app.json` mantém `supported_languages: ["en"]` porque o schema da plataforma aceita apenas `en, de, fr, es, it, zh, ja, ko`; o idioma de runtime da interface é independente desse metadado da loja.
 - O app não tem conta. O conteúdo é obtido de feeds RSS públicos e o snapshot é publicado por um workflow de 15 minutos no GitHub Actions.
 - O texto completo é exibido quando o veículo o publica no feed ou permite extração pública; caso contrário, o app mostra o resumo, identifica isso como **"Resumo do Farolira"** e oferece o link original. Nunca contorna paywall.
 - As notícias pertencem aos veículos; o app sempre exibe a fonte e o link. A política de privacidade e o README detalham o pipeline.

@@ -1,5 +1,6 @@
 import type { TabId } from '../types'
 import { BookmarkIcon, SearchIcon, SettingsIcon, SignalIcon } from './Icons'
+import { t } from '../lib/i18n'
 
 const ITEMS: Array<{ id: TabId; label: string; icon: typeof SignalIcon }> = [
   { id: 'agora', label: 'Agora', icon: SignalIcon },
@@ -18,7 +19,7 @@ export function BottomNav({
   savedCount: number
 }) {
   return (
-    <nav className="bottom-nav" aria-label="Navegação principal">
+    <nav className="bottom-nav" aria-label={t('Navegação principal')}>
       {ITEMS.map(({ id, label, icon: Icon }) => {
         const active = tab === id
         return (
@@ -32,7 +33,7 @@ export function BottomNav({
               <Icon size={22} />
               {id === 'salvos' && savedCount > 0 && <span className="bottom-nav__badge">{savedCount > 9 ? '9+' : savedCount}</span>}
             </span>
-            <span>{label}</span>
+            <span>{t(label)}</span>
           </button>
         )
       })}

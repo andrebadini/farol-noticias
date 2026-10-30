@@ -6,6 +6,7 @@ import { CATEGORY_META } from '../data/meta'
 import { ArrowLeftIcon, BookmarkFilledIcon, BookmarkIcon, ExternalIcon, CloseIcon, GlassesIcon, ShareIcon } from './Icons'
 import { GlyphArt } from './Art'
 import { SourceBadge } from './SourceBadge'
+import { t } from '../lib/i18n'
 
 interface ReaderProps {
   meta: ArticleMeta
@@ -94,17 +95,17 @@ export function Reader({ meta, article, source, saved, fontScale, onFontScale, o
     <div className="reader" role="dialog" aria-modal="true" aria-label={meta.title}>
       <div className="reader__progress" style={{ width: `${progress}%` }} />
       <header className="reader__bar">
-        <button ref={closeRef} className="icon-btn icon-btn--round" onClick={onClose} aria-label="Voltar">
+        <button ref={closeRef} className="icon-btn icon-btn--round" onClick={onClose} aria-label={t('Voltar')}>
           <ArrowLeftIcon size={21} />
         </button>
         <div className="reader__bar-source">
           <SourceBadge source={source} size="xs" />
           <span>{source?.name ?? meta.sourceId}</span>
-          <span className="reader__bar-cat">{category.name}</span>
+          <span className="reader__bar-cat">{t(category.name)}</span>
         </div>
         <div className="reader__bar-actions">
-          <button className="reader__aa" onClick={cycleScale} aria-label="Tamanho do texto">Aa</button>
-          <button className="icon-btn icon-btn--round" onClick={share} aria-label="Compartilhar">
+          <button className="reader__aa" onClick={cycleScale} aria-label={t('Tamanho do texto')}>Aa</button>
+          <button className="icon-btn icon-btn--round" onClick={share} aria-label={t('Compartilhar')}>
             {shared ? <CloseIcon size={18} /> : <ShareIcon size={19} />}
           </button>
         </div>
@@ -129,9 +130,9 @@ export function Reader({ meta, article, source, saved, fontScale, onFontScale, o
           <div className="reader__kicker">
             <span className="kicker" style={{ ['--kicker-color' as string]: category.hue }}>
               <span className="kicker__dot" />
-              {category.name}
+              {t(category.name)}
             </span>
-            <span>{meta.readingMin} min de leitura</span>
+            <span>{t('{n} min de leitura', { n: meta.readingMin })}</span>
           </div>
 
           <h1 className="reader__title">{meta.title}</h1>
@@ -150,14 +151,13 @@ export function Reader({ meta, article, source, saved, fontScale, onFontScale, o
             <div className="reader__notice">
               <span className="reader__notice-mark">◈</span>
               <div>
-                <strong>Texto resumido</strong>
+                <strong>{t('Texto resumido')}</strong>
                 <p>
-                  Esta matéria chegou ao Farolira apenas com o resumo. Tente buscar o texto completo
-                  (versão pública ou arquivada) ou abra o original.
+                  {t('Esta matéria chegou ao Farolira apenas com o resumo. Tente buscar o texto completo (versão pública ou arquivada) ou abra o original.')}
                 </p>
                 <div className="reader__notice-actions">
                   <button className="reader__retry" onClick={onRetryFull} disabled={retrying}>
-                    {retrying ? 'Buscando texto completo…' : 'Buscar texto completo'}
+                    {t(retrying ? 'Buscando texto completo…' : 'Buscar texto completo')}
                   </button>
                 </div>
               </div>
@@ -165,7 +165,7 @@ export function Reader({ meta, article, source, saved, fontScale, onFontScale, o
           )}
 
           {!article ? (
-            <div className="reader__loading" aria-label="Carregando matéria">
+            <div className="reader__loading" aria-label={t('Carregando matéria')}>
               <span /><span /><span /><span /><span />
             </div>
           ) : (
@@ -182,7 +182,7 @@ export function Reader({ meta, article, source, saved, fontScale, onFontScale, o
               )}
               {truncated && (
                 <button className="reader__original" onClick={() => window.open(meta.url, '_blank', 'noopener')}>
-                  Ler na íntegra em {source?.name ?? meta.sourceId}
+                  {t('Ler na íntegra em {source}', { source: source?.name ?? meta.sourceId })}
                   <ExternalIcon size={17} />
                 </button>
               )}
@@ -195,7 +195,7 @@ export function Reader({ meta, article, source, saved, fontScale, onFontScale, o
               {source?.name ?? meta.sourceId} · {longDate(meta.publishedAt)}
             </p>
             <button className="reader__end-link" onClick={() => window.open(meta.url, '_blank', 'noopener')}>
-              Abrir no site original <ExternalIcon size={14} />
+              {t('Abrir no site original')} <ExternalIcon size={14} />
             </button>
           </div>
         </article>
@@ -204,15 +204,15 @@ export function Reader({ meta, article, source, saved, fontScale, onFontScale, o
       <div className="reader__dock">
         <button className={`dock-btn ${saved ? 'is-on' : ''}`} onClick={onToggleSave} aria-pressed={saved}>
           {saved ? <BookmarkFilledIcon size={20} /> : <BookmarkIcon size={20} />}
-          <span>{saved ? 'Salvo' : 'Salvar'}</span>
+          <span>{t(saved ? 'Salvo' : 'Salvar')}</span>
         </button>
         <button className="dock-btn dock-btn--accent" onClick={onGlasses}>
           <GlassesIcon size={21} />
-          <span>Ler nos óculos</span>
+          <span>{t('Ler nos óculos')}</span>
         </button>
         <button className="dock-btn" onClick={() => window.open(meta.url, '_blank', 'noopener')}>
           <ExternalIcon size={20} />
-          <span>Original</span>
+          <span>{t('Original')}</span>
         </button>
       </div>
     </div>

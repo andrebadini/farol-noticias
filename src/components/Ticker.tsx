@@ -1,5 +1,6 @@
 import type { ArticleMeta, SourceInfo } from '../types'
 import { relativeTime } from '../lib/time'
+import { t } from '../lib/i18n'
 
 interface TickerProps {
   articles: ArticleMeta[]
@@ -12,17 +13,17 @@ export function Ticker({ articles, sourceMap, onOpen }: TickerProps) {
   if (!items.length) {
     return (
       <div className="ticker ticker--empty" aria-hidden="true">
-        <span className="ticker__label">AGORA</span>
-        <span className="ticker__static">acendendo o farol…</span>
+        <span className="ticker__label">{t('AGORA')}</span>
+        <span className="ticker__static">{t('acendendo o farol…')}</span>
       </div>
     )
   }
   const loop = [...items, ...items]
   return (
-    <div className="ticker" aria-label="Manchetes agora">
+    <div className="ticker" aria-label={t('Manchetes agora')}>
       <span className="ticker__label">
         <span className="ticker__pulse" />
-        AGORA
+        {t('AGORA')}
       </span>
       <div className="ticker__viewport">
         <div className="ticker__track">

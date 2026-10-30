@@ -1,5 +1,6 @@
 import type { ArticleFull, ArticleMeta, LatestPayload, LoadOrigin } from '../types'
 import { loadLatestCache, readCachedArticle, saveLatestCache, cacheArticle } from './storage'
+import { t } from './i18n'
 
 const DEFAULT_BASE = 'https://andrebadini.github.io/farol-noticias/data'
 const REMOTE_BASE = (import.meta.env.VITE_DATA_BASE as string | undefined)?.replace(/\/$/, '') || DEFAULT_BASE
@@ -120,7 +121,7 @@ export async function fetchArticle(meta: ArticleMeta, force = false): Promise<Ar
 export function articleBody(article: ArticleFull): string {
   const text = article.content?.trim() || article.summary?.trim() || ''
   if (text) return text
-  return 'Esta matéria ainda não tem texto disponível. Abra a versão original para ler na íntegra.'
+  return t('Esta matéria ainda não tem texto disponível. Abra a versão original para ler na íntegra.')
 }
 
 export function isProbablyTruncated(article: ArticleFull): boolean {

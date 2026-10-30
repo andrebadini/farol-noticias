@@ -9,3 +9,5 @@ Save a story on the phone or on the glasses; the full text is stored with it and
 No account, no ads, no tracking. News belongs to the publishers; The app always credits the source and links to the original.
 
 A lighthouse for the Brazilian news.
+
+English and Portuguese interface: the app follows your phone language or you can choose in Settings. The news stays in the publishers’ language.

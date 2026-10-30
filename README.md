@@ -36,6 +36,12 @@ O plugin é um app web (Vite + React + TypeScript) que roda no WebView do Even H
 - **Interface clara/escura**, tipografia editorial (Instrument Serif + Inter Tight), ilustrações generativas sem imagens remotas.
 - **Sem login, sem analytics, sem rastreamento.**
 
+## Idiomas
+
+A interface do Farolira existe em **português** e **inglês**. O padrão é `Automático`: o app usa `navigator.language`/`navigator.languages` do WebView (o SDK do Even Hub não tem API de idioma do sistema; `UserInfo` só expõe `country`). Se o idioma detectado não for português nem inglês, o app cai em português, o idioma das notícias.
+
+A escolha manual fica em **Ajustes → Idioma** (Automático, Português, English) e também há um atalho **◈ English/Português** no menu dos óculos. A preferência é persistida no armazenamento do Even Hub. As notícias, títulos, resumos e nomes dos veículos permanecem no idioma original — português —; apenas a interface é traduzida.
+
 ## Como funciona
 
 ```

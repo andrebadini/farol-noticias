@@ -1,5 +1,6 @@
 import type { CategoryId } from '../types'
 import { CATEGORY_META } from '../data/meta'
+import { t } from '../lib/i18n'
 
 function hash(text: string): number {
   let h = 2166136261
@@ -148,7 +149,7 @@ export function GlyphArt({
           {label}
         </text>
       </svg>
-      <span className="glyph-art__caption">{CATEGORY_META[category]?.name ?? 'Geral'}</span>
+      <span className="glyph-art__caption">{t(CATEGORY_META[category]?.name ?? 'Geral')}</span>
     </div>
   )
 }

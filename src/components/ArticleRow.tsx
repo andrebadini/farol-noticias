@@ -3,6 +3,7 @@ import { CATEGORY_META } from '../data/meta'
 import { relativeTime } from '../lib/time'
 import { BookmarkFilledIcon, BookmarkIcon, TrashIcon } from './Icons'
 import { SourceBadge } from './SourceBadge'
+import { t } from '../lib/i18n'
 
 function escapeRegExp(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
@@ -71,7 +72,7 @@ export function ArticleRow({
           <span className="row__source">{source?.short ?? article.sourceId}</span>
           <span className="row__sep" aria-hidden="true">·</span>
           <time dateTime={article.publishedAt}>{relativeTime(article.publishedAt)}</time>
-          {!article.full && <span className="row__tag">resumo</span>}
+          {!article.full && <span className="row__tag">{t('resumo')}</span>}
         </span>
         <span className="row__title">
           <Highlight text={article.title} query={query} />
@@ -83,17 +84,17 @@ export function ArticleRow({
         )}
         <span className="row__foot">
           <span className="row__cat">
-            <span style={{ color: category.hue }}>{category.glyph}</span> {category.name}
+            <span style={{ color: category.hue }}>{category.glyph}</span> {t(category.name)}
           </span>
           <span className="row__sep" aria-hidden="true">·</span>
-          <span>{article.readingMin} min</span>
+          <span>{t('{n} min', { n: article.readingMin })}</span>
         </span>
       </button>
       <button
         className={`row__save ${saved ? 'is-saved' : ''}`}
         onClick={onToggleSave}
         aria-pressed={saved}
-        aria-label={saved ? `Remover "${article.title}" dos salvos` : `Salvar "${article.title}"`}
+        aria-label={t(saved ? 'Remover "{title}" dos salvos' : 'Salvar "{title}"', { title: article.title })}
       >
         {variant === 'saved' ? (
           <TrashIcon size={19} />

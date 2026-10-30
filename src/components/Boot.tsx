@@ -1,4 +1,5 @@
 import { BeaconMark } from './Art'
+import { t } from '../lib/i18n'
 
 export function BootSplash({ leaving }: { leaving: boolean }) {
   return (
@@ -9,7 +10,7 @@ export function BootSplash({ leaving }: { leaving: boolean }) {
         <span className="splash__dot"><BeaconMark size={38} /></span>
       </div>
       <div className="splash__word">Farolira</div>
-      <p className="splash__tag">notícias do Brasil, num olhar</p>
+      <p className="splash__tag">{t('notícias do Brasil, num olhar')}</p>
       <div className="splash__bar"><span /></div>
     </div>
   )
@@ -17,7 +18,7 @@ export function BootSplash({ leaving }: { leaving: boolean }) {
 
 export function FeedSkeleton() {
   return (
-    <div className="skeleton" aria-label="Carregando notícias">
+    <div className="skeleton" aria-label={t('Carregando notícias')}>
       <div className="skeleton__hero">
         <span className="sk sk--xs" />
         <span className="sk sk--title" />
