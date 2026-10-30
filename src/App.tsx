@@ -477,14 +477,14 @@ export default function App() {
   /* idioma -------------------------------------------------------------- */
   useEffect(() => {
     document.documentElement.lang = lang === 'pt' ? 'pt-BR' : 'en'
-    document.title = lang === 'pt' ? 'Farol Diário · Notícias do Brasil' : 'Farol Diário · Brazil news'
+    document.title = lang === 'pt' ? 'Além dos Pontos · Notícias do Brasil' : 'Além dos Pontos · Brazil news'
     const meta = document.querySelector('meta[name="description"]')
     if (meta) {
       meta.setAttribute(
         'content',
         lang === 'pt'
-          ? 'Farol Diário — as notícias do Brasil no celular e nos óculos Even Realities G2.'
-          : 'Farol Diário — Brazil’s news on your phone and Even Realities G2 glasses.',
+          ? 'Além dos Pontos — as notícias do Brasil no celular e nos óculos Even Realities G2.'
+          : 'Além dos Pontos — Brazil’s news on your phone and Even Realities G2 glasses.',
       )
     }
     void glassesRef.current?.setLanguage()

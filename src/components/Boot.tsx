@@ -9,8 +9,8 @@ export function BootSplash({ leaving }: { leaving: boolean }) {
         <span className="splash__beam splash__beam--2" />
         <span className="splash__dot"><BeaconMark size={38} /></span>
       </div>
-      <div className="splash__word">Farol Diário</div>
-      <p className="splash__tag">{t('notícias do Brasil, num olhar')}</p>
+      <div className="splash__word">Além dos Pontos</div>
+      <p className="splash__tag">{t('Notícias além do óbvio.')}</p>
       <div className="splash__bar"><span /></div>
     </div>
   )

@@ -1,11 +1,11 @@
-# Farol Diário
+# Além dos Pontos
 
-> **As notícias do Brasil, num olhar.**
+> **Notícias além do óbvio.**
 >
-> **Nome na loja e marca:** Farol Diário · **repositório e dados:** `farol-noticias`.
+> **Nome na loja e marca:** Além dos Pontos · **repositório e dados:** `farol-noticias`.
 > Um leitor editorial para os óculos **Even Realities G2** e para o celular, com 23 veículos brasileiros, busca por voz, favoritos offline e atualização a cada 15 minutos.
 
-![Farol Diário no celular](store/screenshots/home-light.png)
+![Além dos Pontos no celular](store/screenshots/home-light.png)
 
 <p align="center">
   <img src="store/screenshots/glasses-home.png" width="576" alt="Lista de notícias no visor do G2" />
@@ -14,7 +14,7 @@
 
 ## O que é
 
-Farol Diário organiza os feeds RSS públicos de **G1, Folha, Valor, InfoMoney, UOL, Crusoé, O Antagonista, Intercept Brasil, Poder360, Metrópoles, Agência Brasil, Brasil de Fato, Veja, Exame, CNN Brasil, Jovem Pan, Nexo, Aos Fatos, Ponte, Alma Preta, Brasil 247, Fórum e DCM** em uma edição única, curada por um robô a cada 15 minutos.
+Além dos Pontos organiza os feeds RSS públicos de **G1, Folha, Valor, InfoMoney, UOL, Crusoé, O Antagonista, Intercept Brasil, Poder360, Metrópoles, Agência Brasil, Brasil de Fato, Veja, Exame, CNN Brasil, Jovem Pan, Nexo, Aos Fatos, Ponte, Alma Preta, Brasil 247, Fórum e DCM** em uma edição única, curada por um robô a cada 15 minutos.
 
 No celular, o app tem uma interface editorial própria (papel, tinta e o amarelo Even) para navegar, filtrar por categoria e fonte, buscar por voz ou teclado, ler a matéria inteira e guardar o que importa. Nos óculos, uma interface em texto de alto contraste, pensada para 576 × 288, com quatro manchetes por tela, paginação por linha e menu de ações por gesto.
 
@@ -38,7 +38,7 @@ O plugin é um app web (Vite + React + TypeScript) que roda no WebView do Even H
 
 ## Idiomas
 
-A interface do Farol Diário existe em **português** e **inglês**. O padrão é `Automático`: o app usa `navigator.language`/`navigator.languages` do WebView (o SDK do Even Hub não tem API de idioma do sistema; `UserInfo` só expõe `country`). Se o idioma detectado não for português nem inglês, o app cai em português, o idioma das notícias.
+A interface do Além dos Pontos existe em **português** e **inglês**. O padrão é `Automático`: o app usa `navigator.language`/`navigator.languages` do WebView (o SDK do Even Hub não tem API de idioma do sistema; `UserInfo` só expõe `country`). Se o idioma detectado não for português nem inglês, o app cai em português, o idioma das notícias.
 
 A escolha manual fica em **Ajustes → Idioma** (Automático, Português, English) e também há um atalho **◈ English/Português** no menu dos óculos. A preferência é persistida no armazenamento do Even Hub. As notícias, títulos, resumos e nomes dos veículos permanecem no idioma original — português —; apenas a interface é traduzida.
 
@@ -92,7 +92,7 @@ O robô guarda um arquivo de matérias em cache (GitHub Actions cache) para não
 | Revista Fórum | Revista | `revistaforum.com.br/feed/` |
 | Diário do Centro do Mundo | Portal | `diariodocentrodomundo.com.br/feed/` |
 
-> As notícias pertencem aos veículos que as publicam. Farol Diário apenas organiza os feeds públicos, indica a fonte e leva ao original. Para pedir a remoção de um conteúdo, abra uma issue.
+> As notícias pertencem aos veículos que as publicam. Além dos Pontos apenas organiza os feeds públicos, indica a fonte e leva ao original. Para pedir a remoção de um conteúdo, abra uma issue.
 
 ## Gestos nos óculos
 
@@ -102,7 +102,7 @@ O robô guarda um arquivo de matérias em cache (GitHub Actions cache) para não
 | 1 toque | abrir a matéria | abrir ações | escolher a ação |
 | 2 toques | abrir o menu | abrir ações | voltar |
 
-No menu: **▶ Atualizar notícias**, **▷ Filtrar por fonte**, **★ Matérias salvas**, **◈ Como usar** e **× Sair do Farol Diário**. O rodapé mostra a página atual, uma barra de progresso e a dica de gesto.
+No menu: **▶ Atualizar notícias**, **▷ Filtrar por fonte**, **★ Matérias salvas**, **◈ Como usar** e **× Sair do Além dos Pontos**. O rodapé mostra a página atual, uma barra de progresso e a dica de gesto.
 
 ## Rodando localmente
 

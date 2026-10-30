@@ -1,4 +1,4 @@
-Farol Diário turns the public RSS feeds of 23 Brazilian outlets into one editorial edition built for your phone and your Even Realities G2 glasses.
+Além dos Pontos turns the public RSS feeds of 23 Brazilian outlets into one editorial edition built for your phone and your Even Realities G2 glasses.
 
 Get the top story on the cover, filter by politics, business, world, sports, technology, culture, cities, justice, health and science, and choose your sources among G1, Folha, Valor, InfoMoney, UOL, Crusoé, O Antagonista, Intercept Brasil, Poder360, Metrópoles, Agência Brasil, Brasil de Fato, Veja, Exame, CNN Brasil, Jovem Pan, Nexo, Aos Fatos, Ponte, Alma Preta, Brasil 247, Fórum and DCM.
 
@@ -8,6 +8,6 @@ Save a story on the phone or on the glasses; the full text is stored with it and
 
 No account, no ads, no tracking. News belongs to the publishers; the app always credits the source and links to the original.
 
-A daily beacon for Brazilian news.
+News beyond the obvious.
 
 English and Portuguese interface: the app follows your phone language or you can choose in Settings. The news stays in the publishers’ language.

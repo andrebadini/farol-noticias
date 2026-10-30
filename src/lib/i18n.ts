@@ -51,7 +51,7 @@ export function t(template: string, vars?: Vars): string {
 const EN: Record<string, string> = {
   /* navegação e marca */
   'notícias do Brasil': 'Brazil news',
-  'notícias do Brasil, num olhar': "Brazil's daily news, at a glance",
+  'Notícias além do óbvio.': "Brazil's news, beyond the headlines",
   'Pular para o conteúdo': 'Skip to content',
   'Agora': 'Now',
   'Buscar': 'Search',
@@ -147,10 +147,10 @@ const EN: Record<string, string> = {
   'Ainda só temos o resumo — abra no celular': 'Still only the summary — open on the phone',
   'Buscar texto completo': 'Get full text',
   'Buscando texto completo…': 'Getting full text…',
-  'Esta matéria chegou ao Farol Diário apenas com o resumo. Tente buscar o texto completo (versão pública ou arquivada) ou abra o original.':
-    'This story reached Farol Diário as a summary only. Try the full text (public or archived version) or open the original.',
-  'Esta matéria ainda não tem texto completo no Farol Diário. Abra a versão original no celular.':
-    'This story does not have the full text on Farol Diário yet. Open the original on your phone.',
+  'Esta matéria chegou ao Além dos Pontos apenas com o resumo. Tente buscar o texto completo (versão pública ou arquivada) ou abra o original.':
+    'This story reached Além dos Pontos as a summary only. Try the full text (public or archived version) or open the original.',
+  'Esta matéria ainda não tem texto completo no Além dos Pontos. Abra a versão original no celular.':
+    'This story does not have the full text on Além dos Pontos yet. Open the original on your phone.',
   'O farol ainda não acendeu': 'The beacon is not lit yet',
   'Não recebemos a edição de hoje. Verifique sua conexão e puxe a atualização — o serviço publica notícias a cada 15 minutos.':
     'We have not received today’s edition. Check your connection and pull to refresh — the service publishes news every 15 minutes.',
@@ -308,7 +308,7 @@ const EN: Record<string, string> = {
   'Abrir endpoint de dados': 'Open data endpoint',
   'Limpar cache': 'Clear cache',
   'Limpar o cache de notícias? Seus salvos continuam guardados.': 'Clear the news cache? Your saved stories are kept.',
-  'Cache limpo. O Farol Diário vai buscar novidades.': 'Cache cleared. Farol Diário will look for updates.',
+  'Cache limpo. O Além dos Pontos vai buscar novidades.': 'Cache cleared. Além dos Pontos will look for updates.',
   'Mantém os salvos no celular': 'Keeps saved stories on the phone',
   'Salvos offline': 'Saved offline',
   'no Even Hub': 'in Even Hub',
@@ -348,7 +348,7 @@ const EN: Record<string, string> = {
   '▲▼ rolar  ·  ● escolher  ·  2× lista': '▲▼ scroll  ·  ● choose  ·  2× list',
   '▲▼ rolar  ·  ● filtrar  ·  2× voltar': '▲▼ scroll  ·  ● filter  ·  2× back',
   '▲▼ rolar  ·  ● abrir  ·  2× voltar': '▲▼ scroll  ·  ● open  ·  2× back',
-  '◈  Abrindo o Farol Diário…': '◈  Opening Farol Diário…',
+  '◈  Abrindo o Além dos Pontos…': '◈  Opening Além dos Pontos…',
   '◈  Sem notícias agora — 2× para atualizar': '◈  No stories right now — 2× to refresh',
   '◈  Sem notícias agora': '◈  No stories right now',
   '◈  Últimas notícias': '◈  Latest stories',
@@ -360,7 +360,7 @@ const EN: Record<string, string> = {
   '◀  Voltar à leitura': '◀  Back to reading',
   '▶  Atualizar notícias': '▶  Refresh news',
   '▷  Filtrar por fonte': '▷  Filter by source',
-  '×  Sair do Farol Diário': '×  Exit Farol Diário',
+  '×  Sair do Além dos Pontos': '×  Exit Além dos Pontos',
   '●  Todas as fontes': '●  All sources',
   'NADA SALVO AINDA': 'NOTHING SAVED YET',
   'Abra uma matéria e toque': 'Open a story and tap',
@@ -378,9 +378,9 @@ const EN: Record<string, string> = {
   'Modo navegador — sem óculos conectados': 'Browser mode — no glasses connected',
   'falha ao iniciar': 'failed to start',
   '1/2  ● ações': '1/2  ● actions',
-  '(Resumo do Farol Diário. A íntegra está disponível no site da fonte.)':
-    '(Farol Diário summary. The full story is available on the source site.)',
-  '◈ FAROL DIÁRIO — COMO USAR': '◈ FAROL DIÁRIO — HOW TO USE',
+  '(Resumo do Além dos Pontos. A íntegra está disponível no site da fonte.)':
+    '(Além dos Pontos summary. The full story is available on the source site.)',
+  '◈ ALÉM DOS PONTOS — COMO USAR': '◈ ALÉM DOS PONTOS — HOW TO USE',
   '▲ ▼  navegar e virar página': '▲ ▼  navigate and turn page',
   '●    abrir a matéria': '●    open the story',
   '●●   2 toques: menu de ações': '●●   2 taps: actions menu',

@@ -28,7 +28,7 @@ export function MiniGlasses({
     <div className="mini-glasses" role="img" aria-label={t('Prévia aproximada do que aparece nos óculos')}>
       <div className="mini-glasses__screen">
         <div className="mini-glasses__top">
-          <span>◈ FAROL DIÁRIO</span>
+          <span>◈ ALÉM DOS PONTOS</span>
           <span>{new Date().toLocaleTimeString(currentLanguage() === 'pt' ? 'pt-BR' : 'en-US', { hour: '2-digit', minute: '2-digit' })}</span>
         </div>
         <div className="mini-glasses__topic">

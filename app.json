@@ -1,7 +1,7 @@
 {
-  "package_id": "com.andrebadini.faroldiario",
+  "package_id": "com.andrebadini.alemdospontos",
   "edition": "202601",
-  "name": "Farol Diário",
+  "name": "Além dos Pontos",
   "version": "1.0.0",
   "min_app_version": "2.2.10",
   "min_sdk_version": "0.0.16",
@@ -9,7 +9,7 @@
   "permissions": [
     {
       "name": "network",
-      "desc": "Busca as manchetes e o texto das matérias no feed público do Farol Diário (GitHub Pages) e envia o conteúdo para os óculos.",
+      "desc": "Busca as manchetes e o texto das matérias no feed público do Além dos Pontos (GitHub Pages) e envia o conteúdo para os óculos.",
       "whitelist": [
         "https://andrebadini.github.io"
       ]

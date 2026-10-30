@@ -1,7 +1,7 @@
-1.0.0 — primeira edição do Farol Diário
+1.0.0 — primeira edição do Além dos Pontos
 
 • 23 veículos brasileiros em uma edição única, no celular e nos óculos Even Realities G2.
 • Interface em português e inglês, automática pelo idioma do celular ou escolha manual nos Ajustes e no menu dos óculos.
+• Notícias além do óbvio: filtros por categoria/fonte, busca por voz/teclado, salvos offline e leitura no G2.
+• Texto completo para matérias resumidas, com leitura pública (Jina Reader) e snapshots públicos do Internet Archive.
 • Menu da matéria com “Últimas notícias”; duplo toque no menu volta à lista; “Voltar à leitura” retorna à matéria.
-• Texto completo para matérias resumidas, com leitura pública (Jina Reader) e snapshots públicos do Internet Archive; cache de resumo atualizável.
-• Capa editorial, arte generativa, busca por voz/teclado, salvos offline, filtros por categoria/fonte e atualização a cada 15 minutos.
