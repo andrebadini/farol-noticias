@@ -24,7 +24,7 @@ O plugin é um app web (Vite + React + TypeScript) que roda no WebView do Even H
 
 - **23 fontes brasileiras** em um só lugar, com diversidade editorial na home (no máximo 2 manchetes por veículo).
 - **Edição sempre fresca**: robô no GitHub Actions a cada 15 minutos; o app confere novidades a cada 15 minutos (configurável em 5/15/30 min ou manual).
-- **Leitura completa** quando o veículo publica o texto no feed ou permite extração; resumo honesto quando não permite, com link para a versão original.
+- **Leitura completa** quando o veículo publica o texto no feed ou permite extração — o robô também tenta o Jina Reader e snapshots públicos do Internet Archive; resumo honesto quando não permite, com link para a versão original.
 - **Favoritos offline** guardados no armazenamento do Even Hub, com o texto da matéria junto.
 - **Busca local** por título, resumo, fonte e palavras-chave extraídas do texto — sem enviar a pesquisa para servidor nenhum.
 - **Busca por voz** quando o WebView expõe reconhecimento de fala; caso contrário, o app orienta o uso do ditado do teclado.

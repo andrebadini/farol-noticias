@@ -41,6 +41,8 @@ jobs:
             farol-news-
 
       - name: Agregar feeds
+        env:
+          JINA_BUDGET: 60
         run: node aggregator/index.mjs --out dist
 
       - name: Salvar arquivo de notícias

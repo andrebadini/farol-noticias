@@ -91,6 +91,7 @@ interface ReaderState {
   meta: ArticleMeta
   article: ArticleFull | null
   loading: boolean
+  retrying?: boolean
 }
 
 export default function App() {
@@ -269,6 +270,21 @@ export default function App() {
 
   const closeReader = useCallback(() => setReader(null), [])
 
+  const retryFullText = useCallback(async () => {
+    const current = reader
+    if (!current) return
+    setReader((prev) => (prev && prev.meta.id === current.meta.id ? { ...prev, retrying: true } : prev))
+    const full = await fetchArticle(current.meta, true)
+    const previousLength = current.article?.content?.length ?? 0
+    const improved = Boolean(full?.content && (full.full || full.content.length > previousLength + 150))
+    setReader((prev) => {
+      if (!prev || prev.meta.id !== current.meta.id) return prev
+      if (improved && full) return { ...prev, article: full, loading: false, retrying: false }
+      return { ...prev, retrying: false }
+    })
+    showToast(improved ? 'Texto completo carregado' : 'Ainda só temos o resumo. Abra o original.', improved ? 'accent' : 'default')
+  }, [reader, showToast])
+
   const sendToGlasses = useCallback(
     async (meta: ArticleMeta) => {
       if (glassesStatus.state !== 'ready' || !glassesRef.current) {
@@ -392,7 +408,7 @@ export default function App() {
         setSourceFilter(id)
         if (id) setCategory('tudo')
       },
-      loadArticle: (meta) => fetchArticle(meta),
+      loadArticle: (meta, force) => fetchArticle(meta, force),
       toggleSave: (meta) => toggleSaveRef.current(meta),
       refresh: async () => {
         await refreshRef.current(false)
@@ -755,6 +771,8 @@ export default function App() {
           onClose={closeReader}
           onToggleSave={() => void toggleSave(reader.meta)}
           onGlasses={() => void sendToGlasses(reader.meta)}
+          onRetryFull={() => void retryFullText()}
+          retrying={Boolean(reader.retrying)}
         />
       )}
 

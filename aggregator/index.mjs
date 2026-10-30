@@ -392,17 +392,153 @@ const myFetch = (url) =>
     signal: AbortSignal.timeout(18_000),
   })
 
-async function extractFullText(url) {
-  const article = await extractArticle(url, { contentLengthThreshold: 250 }, myFetch)
-  if (!article) return null
-  const content = cleanArticleText(html2text(article.content ?? ''))
-  if (content.length < 450) return null
-  return {
-    title: article.title ? cleanTitle(article.title) : '',
-    content,
-    author: article.author ?? '',
-    url: article.url ?? url,
+let jinaBudget = Number(process.env.JINA_BUDGET ?? '60')
+let jinaUsed = 0
+let jinaSuccess = 0
+
+/**
+ * Converte o markdown devolvido pelo Jina Reader em parágrafos de notícia.
+ * O seletor `article` já remove quase todo o menu; o título da matéria é usado
+ * para começar no lugar certo e descartar chapéu/breadcrumb.
+ */
+function markdownToText(markdown = '', title = '') {
+  const text = String(markdown)
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/^#{1,6}\s*/gm, '')
+    .replace(/\*\*|__/g, '')
+    .replace(/^\s*[-*•]\s+/gm, '')
+
+  const lines = text.split(/\n+/).map((line) => line.replace(/\s+/g, ' ').trim()).filter(Boolean)
+  const wanted = stripAccents(String(title).toLowerCase()).replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
+  const skip =
+    /^(not[ií]cias|celebridades|descri[cç][aã]o de chap[eé]u|deixe seu coment[aá]rio|v[ií]deos?|leia (mais|tamb[eé]m)|veja (tamb[eé]m|mais)|compartilhe|siga|assine|publicidade|continua (após|depois)|menu|home|in[ií]cio|uol|folha|valor|g1|exame|metr[oó]poles|cnn|poder360|estad[aã]o|oglobo)$/i
+  const date = /^(\d{2}\/\d{2}\/\d{4})(\s+\d{1,2}h\d{2})?/
+  const out = []
+  let started = false
+
+  for (const line of lines) {
+    const normalized = stripAccents(line.toLowerCase()).replace(/[^a-z0-9 ]/g, ' ').replace(/\s+/g, ' ').trim()
+    if (
+      !started &&
+      wanted &&
+      normalized &&
+      (normalized === wanted ||
+        normalized.includes(wanted.slice(0, Math.min(40, wanted.length))) ||
+        wanted.includes(normalized.slice(0, Math.min(40, normalized.length))))
+    ) {
+      started = true
+      continue
+    }
+    if (!started) {
+      if (line.length >= 90 && !/^https?:/i.test(line)) started = true
+      else continue
+    }
+    if (skip.test(line)) continue
+    if (date.test(line) && line.length < 90) continue
+    if (line.length < 30) continue
+    out.push(line)
   }
+
+  if (!out.length) {
+    for (const line of lines) {
+      if (line.length >= 50 && !skip.test(line) && !/^https?:/i.test(line)) out.push(line)
+    }
+  }
+  return out.join('\n\n')
+}
+
+async function extractWithJina(url, title) {
+  if (jinaBudget <= 0) return null
+  const canonical = canonicalUrl(url)
+
+  const attempt = async (target, selector) => {
+    if (jinaBudget <= 0) return null
+    jinaBudget--
+    jinaUsed++
+    for (let retry = 0; retry < 2; retry++) {
+      try {
+        const headers = { accept: 'text/plain', 'user-agent': UA }
+        if (selector) headers['x-target-selector'] = selector
+        const response = await fetch(`https://r.jina.ai/${target}`, {
+          headers,
+          signal: AbortSignal.timeout(35_000),
+        })
+        if (response.status === 429) {
+          await sleep(4000)
+          continue
+        }
+        if (!response.ok) return null
+        const raw = await response.text()
+        const marker = 'Markdown Content:'
+        const body = raw.includes(marker) ? raw.slice(raw.indexOf(marker) + marker.length) : raw
+        const text = cleanArticleText(markdownToText(body, title))
+        if (text.length >= 450) {
+          jinaSuccess++
+          return text
+        }
+        return null
+      } catch {
+        return null
+      }
+    }
+    return null
+  }
+
+  // 1) página pública com o seletor do corpo do artigo
+  let text = await attempt(canonical, 'article')
+  // 2) se houver paywall, tenta um snapshot público do Wayback
+  if (!text) {
+    try {
+      const availability = await fetch(
+        `https://archive.org/wayback/available?url=${encodeURIComponent(canonical)}`,
+        { signal: AbortSignal.timeout(12_000) },
+      )
+      const data = await availability.json()
+      const snapshot = data?.archived_snapshots?.closest?.url
+      if (snapshot && jinaBudget > 0) text = await attempt(snapshot, 'article')
+    } catch {
+      /* sem snapshot */
+    }
+  }
+  // 3) último recurso: página inteira (o parser acha o título e o corpo)
+  if (!text) text = await attempt(canonical, '')
+  return text
+}
+
+async function extractFullText(url, title = '') {
+  let direct = null
+  try {
+    const article = await extractArticle(url, { contentLengthThreshold: 250 }, myFetch)
+    if (article) {
+      const content = cleanArticleText(html2text(article.content ?? ''))
+      if (content.length >= 450) {
+        direct = {
+          title: article.title ? cleanTitle(article.title) : '',
+          content,
+          author: article.author ?? '',
+          url: article.url ?? url,
+        }
+      }
+    }
+  } catch {
+    /* tenta o Jina */
+  }
+
+  const paywall = /(assine|exclusivo para assinantes|continue lendo|conteúdo exclusivo|já é assinante|para continuar lendo)/i
+  if (direct && direct.content.length >= 700 && !paywall.test(direct.content.slice(0, 2000))) return direct
+
+  const jina = await extractWithJina(url, title)
+  if (jina && (!direct || jina.length > direct.content.length)) {
+    return {
+      title: '',
+      content: jina,
+      author: '',
+      url,
+    }
+  }
+  if (direct && paywall.test(direct.content.slice(0, 2000))) return null
+  return direct
 }
 
 /**
@@ -613,7 +749,7 @@ async function main() {
     })
     .filter((a) => {
       if (!a.extractFailedAt) return true
-      return Date.now() - Date.parse(a.extractFailedAt) > 12 * 3_600_000
+      return Date.now() - Date.parse(a.extractFailedAt) > 2 * 3_600_000
     })
     .slice(0, EXTRACT_CAP)
 
@@ -630,7 +766,7 @@ async function main() {
   let failed = 0
   await mapLimit(queue, EXTRACT_CONCURRENCY, async (article) => {
     try {
-      const full = await extractFullText(article.url)
+      const full = await extractFullText(article.url, article.title)
       if (full?.content) {
         article.content = full.content
         article.full = true
@@ -648,7 +784,7 @@ async function main() {
       failed++
     }
   })
-  log(`  texto completo: ${extracted} ok, ${failed} sem extração`)
+  log(`  texto completo: ${extracted} ok, ${failed} sem extração · Jina: ${jinaSuccess}/${jinaUsed} chamadas`)
 
   // Atualiza o conteúdo do archive com o que foi extraído.
   for (const article of list) archive.articles[article.id] = article

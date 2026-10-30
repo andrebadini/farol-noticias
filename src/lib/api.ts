@@ -82,30 +82,38 @@ export async function fetchLatest(force = false): Promise<LatestResult> {
   }
 }
 
-export async function fetchArticle(meta: ArticleMeta): Promise<ArticleFull | null> {
+export async function fetchArticle(meta: ArticleMeta, force = false): Promise<ArticleFull | null> {
   const cached = await readCachedArticle<ArticleFull>(meta.id)
-  if (cached?.content) return cached
+  // Um resumo em cache não é definitivo: o robô pode ter conseguido o texto
+  // completo depois (Jina/arquivo público), então vale buscar de novo.
+  if (!force && cached?.content && cached.full) return cached
 
   const urls = [`${REMOTE_BASE}/a/${meta.id}.json`, `${LOCAL_BASE}/a/${meta.id}.json`]
   for (const url of urls) {
     try {
       const payload = await fetchJson<ArticleFull>(url, TIMEOUT_ARTICLE)
       if (!payload?.content && !payload?.summary) continue
+      const content = payload.content || ''
       const article: ArticleFull = {
         ...meta,
         ...payload,
         id: meta.id,
         title: payload.title || meta.title,
         sourceId: payload.sourceId || meta.sourceId,
-        content: payload.content || '',
+        content,
+        full: typeof payload.full === 'boolean' ? payload.full : content.length > 450,
       }
-      void cacheArticle(article as unknown as { id: string } & Record<string, unknown>)
-      return article
+      if (article.full || !cached?.content) {
+        void cacheArticle(article as unknown as { id: string } & Record<string, unknown>)
+      }
+      if (article.full || !cached?.content || force) return article
+      return cached
     } catch {
       /* próxima origem */
     }
   }
 
+  if (cached?.content) return cached
   return { ...meta, content: meta.summary }
 }
 

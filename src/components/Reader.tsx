@@ -17,11 +17,13 @@ interface ReaderProps {
   onClose: () => void
   onToggleSave: () => void
   onGlasses: () => void
+  onRetryFull: () => void
+  retrying: boolean
 }
 
 const SCALES = [0.94, 1, 1.1, 1.22]
 
-export function Reader({ meta, article, source, saved, fontScale, onFontScale, onClose, onToggleSave, onGlasses }: ReaderProps) {
+export function Reader({ meta, article, source, saved, fontScale, onFontScale, onClose, onToggleSave, onGlasses, onRetryFull, retrying }: ReaderProps) {
   const scrollRef = useRef<HTMLDivElement>(null)
   const closeRef = useRef<HTMLButtonElement>(null)
   const [progress, setProgress] = useState(0)
@@ -150,9 +152,14 @@ export function Reader({ meta, article, source, saved, fontScale, onFontScale, o
               <div>
                 <strong>Texto resumido</strong>
                 <p>
-                  Esta matéria chegou ao Farolira apenas com o resumo. Abra a versão original para ler a
-                  íntegra no site do veículo.
+                  Esta matéria chegou ao Farolira apenas com o resumo. Tente buscar o texto completo
+                  (versão pública ou arquivada) ou abra o original.
                 </p>
+                <div className="reader__notice-actions">
+                  <button className="reader__retry" onClick={onRetryFull} disabled={retrying}>
+                    {retrying ? 'Buscando texto completo…' : 'Buscar texto completo'}
+                  </button>
+                </div>
               </div>
             </div>
           )}

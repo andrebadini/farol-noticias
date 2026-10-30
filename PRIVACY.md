@@ -1,6 +1,6 @@
 # Política de privacidade — Farolira
 
-**Última atualização:** 28 de outubro de 2026 · versão 1.0.0
+**Última atualização:** 28 de outubro de 2026 · versão 1.0.1
 
 O Farolira é um leitor de notícias para o celular e para os óculos **Even Realities G2**. Esta política explica, sem letra miúda, quais dados o app usa.
 

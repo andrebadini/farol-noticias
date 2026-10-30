@@ -1,3 +1,11 @@
+1.0.1 — navegação e texto completo
+
+• Corrige a volta à lista inicial pelos óculos: o menu da matéria agora tem “Últimas notícias” e o duplo toque no menu leva à lista.
+• Mantém “Voltar à leitura” para retornar à matéria aberta.
+• Ações nos óculos e no celular para tentar o texto completo quando a matéria chega só como resumo.
+• O agregador tenta o texto completo via leitura pública (Jina Reader) e snapshots públicos do Internet Archive.
+• Cache de resumo não fica mais preso: o app busca a versão atualizada ao reabrir a matéria.
+
 1.0.0 — primeira edição
 
 • 23 veículos brasileiros em uma edição única, atualizada a cada 15 minutos.

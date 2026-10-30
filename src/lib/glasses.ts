@@ -38,7 +38,7 @@ export interface GlassesDeps {
   getSaved: () => SavedIndexEntry[]
   getFilter: () => string | null
   setFilter: (id: string | null) => void
-  loadArticle: (meta: ArticleMeta) => Promise<ArticleFull | null>
+  loadArticle: (meta: ArticleMeta, force?: boolean) => Promise<ArticleFull | null>
   toggleSave: (meta: ArticleMeta) => Promise<boolean>
   refresh: () => Promise<void>
   onStatus: (status: GlassesStatus) => void
@@ -455,7 +455,7 @@ export class GlassesUI {
     if (!this.ready) return
     if (this.mode === 'article') void this.showActions('article')
     else if (this.mode === 'home') void this.showActions('home')
-    else if (this.mode === 'actions') void this.backFromActions()
+    else if (this.mode === 'actions') void this.renderHome()
     else void this.renderHome()
   }
 
@@ -503,11 +503,17 @@ export class GlassesUI {
     this.actions = []
 
     if (from === 'article' && this.current) {
+      items.push('◈  Últimas notícias')
+      this.actions.push(() => this.renderHome())
       const isSaved = this.saved.some((entry) => entry.id === this.current!.id)
       items.push(isSaved ? '★  Remover dos salvos' : '☆  Salvar matéria')
       this.actions.push(() => this.toggleCurrentSave())
       items.push('◀  Voltar à leitura')
       this.actions.push(() => this.renderArticle())
+      if (!this.current.full) {
+        items.push('◈  Buscar texto completo')
+        this.actions.push(() => this.tryFullText())
+      }
     }
 
     items.push('▶  Atualizar notícias')
@@ -543,7 +549,7 @@ export class GlassesUI {
           new TextContainerProperty({
             xPosition: 0, yPosition: 252, width: W, height: 36,
             paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: '▲▼ rolar  ·  ● escolher  ·  2× voltar', isEventCapture: 0,
+            textColor: DIM, content: '▲▼ rolar  ·  ● escolher  ·  2× lista', isEventCapture: 0,
           }),
         ],
         listObject: [
@@ -563,12 +569,19 @@ export class GlassesUI {
     )
   }
 
-  private async backFromActions(): Promise<void> {
-    if (this.previousMode === 'article' && this.current) await this.renderArticle()
-    else if (this.previousMode === 'saved') await this.renderSaved()
-    else if (this.previousMode === 'sources') await this.renderSources()
-    else if (this.previousMode === 'help') await this.renderHelp()
-    else await this.renderHome()
+  private async tryFullText(): Promise<void> {
+    if (!this.current) return
+    await this.upgradeText(2, 'subtitle', 'Buscando texto completo…')
+    const full = await this.deps.loadArticle(this.current, true)
+    const previousLength = this.current.content?.length ?? 0
+    if (full?.content && (full.full || full.content.length > previousLength + 150)) {
+      this.current = full
+      this.pages = this.paginateArticle(full)
+      this.page = 0
+      await this.renderArticle()
+      return
+    }
+    await this.upgradeText(2, 'subtitle', 'Ainda só temos o resumo — abra no celular')
   }
 
   private async toggleCurrentSave(): Promise<void> {

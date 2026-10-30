@@ -1,4 +1,4 @@
-# Publicação no Even Hub — Farolira 1.0.0
+# Publicação no Even Hub — Farolira 1.0.1
 
 Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com os textos prontos e os limites de cada campo.
 
@@ -14,7 +14,7 @@ Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com
 | **Ícone grande (se o portal pedir)** | [store/icon-1024.png](icon-1024.png) | PNG quadrado |
 | **Idioma da interface** | Português (Brasil) | — |
 | **País / região** | Brasil | — |
-| **Versão** | `1.0.0` | semver |
+| **Versão** | `1.0.1` | semver |
 | **min_app_version** | `2.2.10` | exigido pelo SDK 0.0.16 |
 | **min_sdk_version** | `0.0.16` | SDK usado no build |
 | **Política de privacidade** | https://andrebadini.github.io/farol-noticias/privacy.html | URL pública |
