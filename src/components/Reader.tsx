@@ -153,7 +153,7 @@ export function Reader({ meta, article, source, saved, fontScale, onFontScale, o
               <div>
                 <strong>{t('Texto resumido')}</strong>
                 <p>
-                  {t('Esta matéria chegou ao Farolira apenas com o resumo. Tente buscar o texto completo (versão pública ou arquivada) ou abra o original.')}
+                  {t('Esta matéria chegou ao Farol Diário apenas com o resumo. Tente buscar o texto completo (versão pública ou arquivada) ou abra o original.')}
                 </p>
                 <div className="reader__notice-actions">
                   <button className="reader__retry" onClick={onRetryFull} disabled={retrying}>

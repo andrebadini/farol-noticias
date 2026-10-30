@@ -307,7 +307,7 @@ export function SettingsView({
           onClick={async () => {
             if (!window.confirm(t('Limpar o cache de notícias? Seus salvos continuam guardados.'))) return
             await onClearCache()
-            onToast(t('Cache limpo. O Farolira vai buscar novidades.'))
+            onToast(t('Cache limpo. O Farol Diário vai buscar novidades.'))
           }}
         >
           <span className="setting-row__icon"><TrashIcon size={18} /></span>
@@ -332,8 +332,8 @@ export function SettingsView({
       <footer className="about">
         <span className="about__mark" aria-hidden="true">◈</span>
         <div>
-          <strong>Farolira</strong>
-          <span>{t('versão 1.1.0 · feito para Even Realities G2')}</span>
+          <strong>Farol Diário</strong>
+          <span>{t('versão 1.0.0 · feito para Even Realities G2')}</span>
           <button className="about__link" onClick={() => window.open('https://github.com/andrebadini/farol-noticias', '_blank', 'noopener')}>
             github.com/andrebadini/farol-noticias <ExternalIcon size={12} />
           </button>

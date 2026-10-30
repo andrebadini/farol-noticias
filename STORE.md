@@ -1,4 +1,4 @@
-# Publicação no Even Hub — Farolira 1.1.0
+# Publicação no Even Hub — Farol Diário 1.0.0
 
 Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com os textos prontos e os limites de cada campo.
 
@@ -6,31 +6,31 @@ Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com
 
 | Campo | Valor | Limite |
 |---|---|---|
-| **Nome** | `Farolira` | 1–20 caracteres |
-| **Tagline / descrição curta** | `As notícias do Brasil, num olhar.` | 1–50 caracteres |
-| **Descrição da loja** | use [store/description-pt.txt](description-pt.txt) (ou [store/description-en.txt](description-en.txt)) | 1–2000 caracteres |
-| **Categoria** | Notícias / News & Magazines | — |
+| **Nome** | `Farol Diário` | 1–20 caracteres |
+| **Tagline / descrição curta** | `Brazil's daily news, at a glance.` | 1–50 caracteres |
+| **Descrição da loja** | [store/description-en.txt](description-en.txt) (inglês; a versão PT é [store/description-pt.txt](description-pt.txt)) | 1–2000 caracteres |
+| **Categoria** | Entertainment (o Even Hub não tem “News”) | — |
 | **Ícone (CLI / portal 24×24)** | [store/icon-24.png](icon-24.png) | PNG 24×24, pixels visíveis #F4F4F4 em blocos 2×2 |
 | **Ícone grande (se o portal pedir)** | [store/icon-1024.png](icon-1024.png) | PNG quadrado |
 | **Idioma da interface** | Português (Brasil) e English; automático pelo idioma do celular ou escolha manual | — |
 | **País / região** | Brasil | — |
-| **Versão** | `1.1.0` | semver |
+| **Versão** | `1.0.0` | semver |
 | **min_app_version** | `2.2.10` | exigido pelo SDK 0.0.16 |
 | **min_sdk_version** | `0.0.16` | SDK usado no build |
 | **Política de privacidade** | https://andrebadini.github.io/farol-noticias/privacy.html | URL pública |
 | **Site / suporte** | https://github.com/andrebadini/farol-noticias | URL pública |
 | **Pacote** | `farol-noticias.ehpk` | gerado por `npm run pack` |
-| **Package ID** | `com.andrebadini.farolira` | reverse domain, minúsculo |
+| **Package ID** | `com.andrebadini.faroldiario` | reverse domain, minúsculo |
 
-> **Nome verificado (28/10/2026):** `Farolira` — sem site, app, pacote npm ou repositório equivalente; `farolira.com`, `.com.br`, `.app` e `.io` estavam sem site ativo. Registre o domínio antes do lançamento, se quiser garantir a marca.
+> **Nome escolhido em 30/10/2026:** `Farol Diário`, por decisão do produto. Existe um veículo homônimo, **O Farol Diário** (`ofaroldiario.com.br`); o nome foi mantido mesmo assim. Não reivindicar exclusividade; vale validar marca/domínio antes de investir em SEO.
 
-## 2. Descrição da loja (PT-BR)
+## 2. Descrição da loja — alternativa em português
 
-Copie de `store/description-pt.txt`. O texto tem 1.124 caracteres, dentro do limite de 2.000.
+Copie de `store/description-pt.txt`. O texto tem 1.271 caracteres, dentro do limite de 2.000.
 
-## 3. Descrição da loja (EN)
+## 3. Descrição da loja — inglês (card atual)
 
-Copie de `store/description-en.txt` se o portal estiver em inglês. O texto tem 1.173 caracteres.
+Copie de `store/description-en.txt` se o portal estiver em inglês. O texto tem 1.321 caracteres.
 
 ## 4. Permissões
 
@@ -86,8 +86,8 @@ npx evenhub login
 # 2. crie o app e o build Draft (só na primeira vez)
 npx evenhub create farol-noticias.ehpk \
   --package-id com.andrebadini.farolnoticias \
-  --name "Farolira" \
-  --tagline "As notícias do Brasil, num olhar." \
+  --name "Farol Diário" \
+  --tagline "Brazil's daily news, at a glance." \
   --description-file store/description-pt.txt \
   --icon store/icon-24.png
 
@@ -101,8 +101,8 @@ npx evenhub upload farol-noticias.ehpk
 # 5. ajuste textos/ícone de um app ainda em Draft
 npx evenhub update \
   --package-id com.andrebadini.farolnoticias \
-  --name "Farolira" \
-  --tagline "As notícias do Brasil, num olhar." \
+  --name "Farol Diário" \
+  --tagline "Brazil's daily news, at a glance." \
   --description-file store/description-pt.txt \
   --icon store/icon-24.png
 ```
@@ -111,7 +111,7 @@ O `create` deixa o app em **Draft**; a publicação pública é feita no portal 
 
 ## 8. Publicando pelo portal (interface web)
 
-1. Acesse o portal de desenvolvedor do Even Hub e crie um app com o `package_id` `com.andrebadini.farolira`.
+1. Acesse o portal de desenvolvedor do Even Hub e crie um app com o `package_id` `com.andrebadini.faroldiario`.
 2. Cole os campos da seção 1; use os textos de `store/description-pt.txt` e `store/description-en.txt`.
 3. Envie o ícone `store/icon-24.png` (o portal pode pedir também o `icon-1024.png`).
 4. Envie `farol-noticias.ehpk` como build.
@@ -135,8 +135,8 @@ O `create` deixa o app em **Draft**; a publicação pública é feita no portal 
 ## 10. Observações para o revisor
 
 - A interface é **português + English**. O modo `Automático` usa `navigator.language`/`languages` do WebView (o SDK do Even Hub não expõe idioma do sistema; `UserInfo` só tem `country`). Há seleção manual nos Ajustes e um atalho no menu dos óculos.
-- As **notícias continuam em português** (idioma dos veículos); a interface, menus, filtros, dicas e avisos são traduzidos. Alguns veículos podem ter edições em inglês, mas o Farolira não as agrega nesta versão.
+- As **notícias continuam em português** (idioma dos veículos); a interface, menus, filtros, dicas e avisos são traduzidos. Alguns veículos podem ter edições em inglês, mas o Farol Diário não as agrega nesta versão.
 - `app.json` mantém `supported_languages: ["en"]` porque o schema da plataforma aceita apenas `en, de, fr, es, it, zh, ja, ko`; o idioma de runtime da interface é independente desse metadado da loja.
 - O app não tem conta. O conteúdo é obtido de feeds RSS públicos e o snapshot é publicado por um workflow de 15 minutos no GitHub Actions.
-- O texto completo é exibido quando o veículo o publica no feed ou permite extração pública; caso contrário, o app mostra o resumo, identifica isso como **"Resumo do Farolira"** e oferece o link original. Nunca contorna paywall.
+- O texto completo é exibido quando o veículo o publica no feed ou permite extração pública; caso contrário, o app mostra o resumo, identifica isso como **"Resumo do Farol Diário"** e oferece o link original. Nunca contorna paywall.
 - As notícias pertencem aos veículos; o app sempre exibe a fonte e o link. A política de privacidade e o README detalham o pipeline.

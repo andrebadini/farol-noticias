@@ -1,4 +1,4 @@
-Farolira turns the public RSS feeds of 23 Brazilian outlets into one editorial edition built for your phone and your Even Realities G2 glasses.
+Farol Diário turns the public RSS feeds of 23 Brazilian outlets into one editorial edition built for your phone and your Even Realities G2 glasses.
 
 Get the top story on the cover, filter by politics, business, world, sports, technology, culture, cities, justice, health and science, and choose your sources among G1, Folha, Valor, InfoMoney, UOL, Crusoé, O Antagonista, Intercept Brasil, Poder360, Metrópoles, Agência Brasil, Brasil de Fato, Veja, Exame, CNN Brasil, Jovem Pan, Nexo, Aos Fatos, Ponte, Alma Preta, Brasil 247, Fórum and DCM.
 
@@ -6,8 +6,8 @@ The phone app brings an editorial type-led interface, generative cover art, voic
 
 Save a story on the phone or on the glasses; the full text is stored with it and stays readable offline. The edition refreshes every 15 minutes automatically — or manually with a gesture on the glasses.
 
-No account, no ads, no tracking. News belongs to the publishers; The app always credits the source and links to the original.
+No account, no ads, no tracking. News belongs to the publishers; the app always credits the source and links to the original.
 
-A lighthouse for the Brazilian news.
+A daily beacon for Brazilian news.
 
 English and Portuguese interface: the app follows your phone language or you can choose in Settings. The news stays in the publishers’ language.

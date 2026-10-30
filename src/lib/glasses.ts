@@ -140,7 +140,7 @@ export class GlassesUI {
                 itemCount: 1,
                 itemWidth: 560,
                 isItemSelectBorderEn: 1,
-                itemName: [t('◈  Abrindo o Farolira…')],
+                itemName: [t('◈  Abrindo o Farol Diário…')],
               }),
             }),
           ],
@@ -301,11 +301,11 @@ export class GlassesUI {
     const meta = `${source?.name ?? article.sourceId} · ${relativeTime(article.publishedAt)} · ${t('{n} min de leitura', { n: article.readingMin })}`
     const body =
       (article.content || article.summary || '').trim() ||
-      t('Esta matéria ainda não tem texto completo no Farolira. Abra a versão original no celular.')
+      t('Esta matéria ainda não tem texto completo no Farol Diário. Abra a versão original no celular.')
     const note = article.full
       ? ''
-      : `\n\n${t('(Resumo do Farolira. A íntegra está disponível no site da fonte.)')}`
-    const text = `▌ ${article.title}\n\n${meta}\n\n${body}${note}\n\n— FAROLIRA`
+      : `\n\n${t('(Resumo do Farol Diário. A íntegra está disponível no site da fonte.)')}`
+    const text = `▌ ${article.title}\n\n${meta}\n\n${body}${note}\n\n— FAROL DIÁRIO`
     return paginate(text, { width: BODY_W, height: BODY_H })
   }
 
@@ -314,7 +314,7 @@ export class GlassesUI {
   }
 
   private brandLine(): string {
-    return `◈ FAROLIRA  ·  ${clock(new Date().toISOString())}`
+    return `◈ FAROL DIÁRIO  ·  ${clock(new Date().toISOString())}`
   }
 
   private topicLine(): string {
@@ -555,7 +555,7 @@ export class GlassesUI {
     this.actions.push(() => this.deps.setLanguageSetting(currentLanguage() === 'pt' ? 'en' : 'pt'))
     items.push(t('◈  Como usar'))
     this.actions.push(() => this.renderHelp())
-    items.push(t('×  Sair do Farolira'))
+    items.push(t('×  Sair do Farol Diário'))
     this.actions.push(() => this.exit())
 
     const subtitle =
@@ -772,7 +772,7 @@ export class GlassesUI {
     if (!this.ready) return
     this.mode = 'help'
     const help = [
-      t('◈ FAROLIRA — COMO USAR'),
+      t('◈ FAROL DIÁRIO — COMO USAR'),
       '',
       t('▲ ▼  navegar e virar página'),
       t('●    abrir a matéria'),

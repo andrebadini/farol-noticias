@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Farolira — agregador.
+ * Farol Diário — agregador.
  *
  * Lê os feeds RSS/Atom das fontes brasileiras, normaliza, deduplica, classifica,
  * extrai o texto dos artigos (quando necessário) e grava um snapshot estático:
@@ -876,13 +876,13 @@ async function main() {
   await writeFile(
     join(OUT_DIR, 'index.html'),
     `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Farolira · dados</title><style>
+<title>Farol Diário · dados</title><style>
 :root{color-scheme:dark}body{margin:0;background:#0c0c0b;color:#f2efe8;font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;display:grid;min-height:100vh;place-items:center}
 main{max-width:620px;padding:40px} .k{display:inline-block;padding:4px 10px;border:1px solid #fef991;color:#fef991;border-radius:999px;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
 h1{font-size:54px;line-height:.95;letter-spacing:-.04em;margin:24px 0 8px;font-weight:700} p{color:#b7b3a8}
 code{background:#1a1a18;padding:3px 6px;border-radius:6px;color:#fef991} a{color:#fef991}
-</style></head><body><main><span class="k">farolira · dados abertos</span><h1>Notícias do Brasil,<br>num olhar.</h1>
-<p>Snapshot estático que alimenta o plugin <strong>Farolira</strong> nos óculos Even Realities G2.</p>
+</style></head><body><main><span class="k">faroldiario · dados abertos</span><h1>Notícias do Brasil,<br>num olhar.</h1>
+<p>Snapshot estático que alimenta o plugin <strong>Farol Diário</strong> nos óculos Even Realities G2.</p>
 <p><strong>${list.length}</strong> matérias · <strong>${okCount}/${SOURCES.length}</strong> fontes no ar · atualizado em ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })} (Brasília).</p>
 <p><a href="./data/latest.json">data/latest.json</a> · <a href="./privacy.html">privacidade</a> · <a href="https://github.com/andrebadini/farol-noticias">código</a></p>
 <p style="font-size:12px;color:#6d6a62">Atualização automática a cada 15 minutos via GitHub Actions. Conteúdo de terceiros; os direitos são dos veículos originais.</p></main></body></html>`,
@@ -891,7 +891,7 @@ code{background:#1a1a18;padding:3px 6px;border-radius:6px;color:#fef991} a{color
   await writeFile(
     join(OUT_DIR, 'privacy.html'),
     `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Farolira · Privacidade</title><style>
+<title>Farol Diário · Privacidade</title><style>
 :root{color-scheme:dark}body{margin:0;background:#0c0c0b;color:#f2efe8;font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
 main{max-width:700px;margin:0 auto;padding:48px 24px 72px} .k{display:inline-block;padding:4px 10px;border:1px solid #fef991;color:#fef991;border-radius:999px;font-size:11px;letter-spacing:.12em;text-transform:uppercase}
 h1{font-size:46px;line-height:1;letter-spacing:-.03em;margin:20px 0 8px} h2{font-size:20px;margin:34px 0 8px;letter-spacing:-.01em} p,li{color:#b9b4a7}
@@ -899,7 +899,7 @@ a{color:#fef991} small{color:#7d786c} strong{color:#f2efe8}
 </style></head><body><main>
 <span class="k">farol · privacidade</span>
 <h1>Privacidade,<br>sem letra miúda.</h1>
-<p>Farolira é um leitor de notícias para os óculos Even Realities G2. Ele não tem login, não pede dados pessoais e não usa rastreadores.</p>
+<p>Farol Diário é um leitor de notícias para os óculos Even Realities G2. Ele não tem login, não pede dados pessoais e não usa rastreadores.</p>
 <h2>O que o app faz</h2>
 <p>O app baixa um arquivo público de manchetes e matérias do endereço <a href="https://andrebadini.github.io/farol-noticias/data/latest.json">andrebadini.github.io/farol-noticias</a>, mantido por um robô que lê os feeds RSS públicos dos veículos citados no app. Nenhuma informação sua é enviada nesse pedido.</p>
 <h2>O que fica no seu celular</h2>
@@ -907,12 +907,12 @@ a{color:#fef991} small{color:#7d786c} strong{color:#f2efe8}
 <h2>Busca por voz</h2>
 <p>Quando o WebView do Even Hub oferece reconhecimento de voz, o áudio é processado pelo serviço do sistema/navegador, conforme a política da plataforma. O app não grava nem envia áudio para servidores próprios. Se o recurso não estiver disponível, use o ditado do teclado do celular.</p>
 <h2>Links para os veículos</h2>
-<p>Ao abrir a versão original, você sai do Farol e passa a navegar no site do veículo, sujeito à política de privacidade dele. Farolira não controla esses sites.</p>
+<p>Ao abrir a versão original, você sai do Farol e passa a navegar no site do veículo, sujeito à política de privacidade dele. Farol Diário não controla esses sites.</p>
 <h2>Conteúdo de terceiros</h2>
 <p>As notícias pertencem aos veículos que as publicaram. O Farol apenas organiza os feeds públicos e sempre indica a fonte e o link original. Para pedir a remoção de um conteúdo do agregador, abra uma issue no repositório do projeto.</p>
 <h2>Contato</h2>
 <p>Dúvidas, sugestões ou remoção de conteúdo: <a href="https://github.com/andrebadini/farol-noticias/issues">github.com/andrebadini/farol-noticias/issues</a>.</p>
-<p><small>Última atualização: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · Farolira 1.0.0</small></p>
+<p><small>Última atualização: ${new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' })} · Farol Diário 1.0.0</small></p>
 </main></body></html>`,
   )
 

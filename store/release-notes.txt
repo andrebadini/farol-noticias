@@ -1,24 +1,7 @@
-1.1.0 — interface em português e inglês
+1.0.0 — primeira edição do Farol Diário
 
-• Idioma do app em português ou inglês, com modo automático pelo idioma do celular.
-• Seletor de idioma nos Ajustes do celular e atalho no menu dos óculos.
-• Notícias continuam no idioma dos veículos (português); a interface, os menus, as dicas e os avisos são traduzidos.
-• Inclui as correções do 1.0.1: volta à lista pelo menu dos óculos e busca de texto completo.
-
-1.0.1 — navegação e texto completo
-
-• Corrige a volta à lista inicial pelos óculos: o menu da matéria agora tem “Últimas notícias” e o duplo toque no menu leva à lista.
-• Mantém “Voltar à leitura” para retornar à matéria aberta.
-• Ações nos óculos e no celular para tentar o texto completo quando a matéria chega só como resumo.
-• O agregador tenta o texto completo via leitura pública (Jina Reader) e snapshots públicos do Internet Archive.
-• Cache de resumo não fica mais preso: o app busca a versão atualizada ao reabrir a matéria.
-
-1.0.0 — primeira edição
-
-• 23 veículos brasileiros em uma edição única, atualizada a cada 15 minutos.
-• Capa editorial com tipografia própria, arte generativa e leitura confortável.
-• Busca por voz (quando disponível) ou teclado, com sugestões e buscas recentes.
-• Filtros por categoria e fonte, válidos no celular e nos óculos.
-• Favoritos offline guardados no armazenamento do Even Hub.
-• Interface completa nos óculos G2: lista nativa, leitura paginada linha a linha, menu de dois toques, atualização manual por gesto e filtro por fonte.
-• Tema claro e escuro, sem login, sem anúncios e sem rastreamento.
+• 23 veículos brasileiros em uma edição única, no celular e nos óculos Even Realities G2.
+• Interface em português e inglês, automática pelo idioma do celular ou escolha manual nos Ajustes e no menu dos óculos.
+• Menu da matéria com “Últimas notícias”; duplo toque no menu volta à lista; “Voltar à leitura” retorna à matéria.
+• Texto completo para matérias resumidas, com leitura pública (Jina Reader) e snapshots públicos do Internet Archive; cache de resumo atualizável.
+• Capa editorial, arte generativa, busca por voz/teclado, salvos offline, filtros por categoria/fonte e atualização a cada 15 minutos.
