@@ -22,6 +22,16 @@ Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com
 | **Pacote** | `alemdospontos-1.0.1.ehpk` | gerado por `npm run pack` |
 | **Package ID** | `com.andrebadini.alemdospontos` | reverse domain, minúsculo |
 
+## Estado do envio (03/11/2026)
+
+- Build **1.0.1** enviada pela CLI 0.2.0: **ID 130846, status `Private`**, 527.776 bytes (antes
+  1.486.859 bytes). SHA-256 `d222fd4c2eb54fa97ba99acf0e3fc8ee752a3bfe57bc4a3a699252a60e67cf7f`;
+  o download do Hub confere byte a byte.
+- A 1.0.0 continua **Rejected**. A 1.0.1 precisa ser submetida no portal: **Builds → 1.0.1 →
+  Public → Submit for review** (a CLI não faz esse passo).
+- O pacote não embute `dist/data`: o app busca o endpoint remoto autorizado e usa o cache do
+  telefone. O `npm run pack` remove o snapshot e falha se sobrar URL fora da whitelist.
+
 > **Nome escolhido em 30/10/2026:** `Além dos Pontos`. A busca rápida não encontrou site/marca de notícias com o nome exato; é uma expressão comum. Ainda vale validar domínio, redes e marca antes de investir em SEO.
 
 ## 2. Descrição da loja — alternativa em português
