@@ -34,7 +34,7 @@ export function SavedView({
           <EmptyArt />
           <h2>{t('Seu farol pessoal começa aqui')}</h2>
           <p>
-            {t('Toque no marcador de uma matéria para salvá-la. No G2, dois toques abrem o menu e')}{' '}
+            {t('Toque no marcador de uma matéria para salvá-la. No G2, abra a matéria, toque uma vez e')}{' '}
             <strong>★ {t('Salvar')}</strong>.
           </p>
           <button className="btn btn--ink" onClick={onExplore}>

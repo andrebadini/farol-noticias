@@ -175,8 +175,8 @@ const EN: Record<string, string> = {
   'Dicas de uso': 'Usage tips',
   'O jornal também mora nos óculos': 'The newspaper also lives on your glasses',
   'primeira vez aqui': 'first time here',
-  'Dois toques no G2 abrem o menu. Deslize para virar a página e salve aqui para ler lá.':
-    'Double-tap the G2 to open the menu. Swipe to turn the page and save here to read there.',
+  'Na lista do G2, o último item abre o menu e dois toques saem. Deslize para virar a página e salve aqui para ler lá.':
+    'On the G2 list, the last item opens the menu and a double-tap exits. Swipe to turn the page and save here to read there.',
   'Ver gestos': 'See gestures',
   'Entendi': 'Got it',
   'Dica de uso': 'Usage tip',
@@ -234,7 +234,7 @@ const EN: Record<string, string> = {
   'Guarde o que quer ler depois. Fica no celular e também no menu dos óculos.':
     'Save what you want to read later. It stays on your phone and in the glasses menu too.',
   'Seu farol pessoal começa aqui': 'Your personal beacon starts here',
-  'Toque no marcador de uma matéria para salvá-la. No G2, dois toques abrem o menu e': 'Tap a story’s bookmark to save it. On the G2, double-tap opens the menu and',
+  'Toque no marcador de uma matéria para salvá-la. No G2, abra a matéria, toque uma vez e': 'Tap a story’s bookmark to save it. On the G2, open the story, tap once and',
   '★ Salvar': '★ Save',
   'Explorar a edição': 'Explore the edition',
   'offline': 'offline',
@@ -296,7 +296,8 @@ const EN: Record<string, string> = {
   'abrir a matéria': 'open the story',
   '2 toques': '2 taps',
   'menu de ações': 'actions menu',
-  '2 toques → Atualizar': '2 taps → Refresh',
+  '☰ Menu → Atualizar': '☰ Menu → Refresh',
+  'sair (diálogo do sistema)': 'exit (system dialog)',
   'Enviar a manchete': 'Send the headline',
   'Como funciona': 'How it works',
   'No celular, use o botão “Ler nos óculos” dentro de qualquer matéria.':
@@ -344,12 +345,12 @@ const EN: Record<string, string> = {
   'Economia e negócios': 'Business and economy',
 
   /* óculos */
-  '▲▼ rolar  ·  ● abrir  ·  2× menu': '▲▼ scroll  ·  ● open  ·  2× menu',
+  '▲▼ rolar  ·  ● abrir  ·  2× sair': '▲▼ scroll  ·  ● open  ·  2× exit',
   '▲▼ rolar  ·  ● escolher  ·  2× lista': '▲▼ scroll  ·  ● choose  ·  2× list',
   '▲▼ rolar  ·  ● filtrar  ·  2× voltar': '▲▼ scroll  ·  ● filter  ·  2× back',
   '▲▼ rolar  ·  ● abrir  ·  2× voltar': '▲▼ scroll  ·  ● open  ·  2× back',
   '◈  Abrindo o Além dos Pontos…': '◈  Opening Além dos Pontos…',
-  '◈  Sem notícias agora — 2× para atualizar': '◈  No stories right now — 2× to refresh',
+  '◈  Sem notícias agora — toque para atualizar': '◈  No stories right now — tap to refresh',
   '◈  Sem notícias agora': '◈  No stories right now',
   '◈  Últimas notícias': '◈  Latest stories',
   '◈  Buscar texto completo': '◈  Get full text',
@@ -383,13 +384,15 @@ const EN: Record<string, string> = {
   '◈ ALÉM DOS PONTOS — COMO USAR': '◈ ALÉM DOS PONTOS — HOW TO USE',
   '▲ ▼  navegar e virar página': '▲ ▼  navigate and turn page',
   '●    abrir a matéria': '●    open the story',
-  '●●   2 toques: menu de ações': '●●   2 taps: actions menu',
+  '●●   2 toques na lista: sair': '●●   2 taps on the list: exit',
+  '☰ Menu: último item da lista': '☰ Menu: last item in the list',
+  '☰  Menu: atualizar, filtrar, salvos': '☰  Menu: refresh, filter, saved',
   '2× em matéria abre o menu': '2× on a story opens the menu',
   'No menu: atualizar, filtrar': 'In the menu: refresh, filter',
   'por fonte, salvar, ajuda e sair.': 'by source, save, help and exit.',
   'O app atualiza sozinho a': 'The app refreshes by itself',
   'cada 15 minutos. Gesto manual:': 'every 15 minutes. Manual gesture:',
-  '2 toques → menu Atualizar.': '2 taps → Refresh menu.',
+  '☰ Menu → Atualizar.': '☰ Menu → Refresh.',
 
   'Esta matéria ainda não tem texto disponível. Abra a versão original para ler na íntegra.':
     'This story does not have text available yet. Open the original to read the full piece.',

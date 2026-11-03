@@ -1,3 +1,4 @@
+import { doubleTapAction, type GlassesScreen } from './gestures'
 import {
   CreateStartUpPageContainer,
   ListContainerProperty,
@@ -31,7 +32,7 @@ export interface GlassesSnapshot {
   filter: string | null
 }
 
-type GlassesMode = 'home' | 'article' | 'actions' | 'sources' | 'saved' | 'help'
+type GlassesMode = GlassesScreen
 
 export interface GlassesDeps {
   getFeed: () => ArticleMeta[]
@@ -52,6 +53,8 @@ const BODY_W = 560
 const BODY_H = 216
 const BRIGHT = 4
 const DIM = 2
+// 19 manchetes + item de menu = 20 itens na lista da home.
+const HOME_ARTICLES = 19
 
 const encoder = new TextEncoder()
 
@@ -82,6 +85,7 @@ export class GlassesUI {
 
   private mode: GlassesMode = 'home'
   private previousMode: GlassesMode = 'home'
+  private homeMenuIndex = -1
   private feed: ArticleMeta[] = []
   private sources: SourceInfo[] = []
   private saved: SavedIndexEntry[] = []
@@ -128,7 +132,7 @@ export class GlassesUI {
             new TextContainerProperty({
               xPosition: 0, yPosition: 252, width: W, height: 36,
               paddingLength: 4, containerID: 4, containerName: 'hint',
-              textColor: DIM, content: t('▲▼ rolar  ·  ● abrir  ·  2× menu'), isEventCapture: 0,
+              textColor: DIM, content: t('▲▼ rolar  ·  ● abrir  ·  2× sair'), isEventCapture: 0,
             }),
           ],
           listObject: [
@@ -327,7 +331,8 @@ export class GlassesUI {
   private listItems(): string[] {
     if (!this.feed.length) {
       this.homeArticles = []
-      return [t('◈  Sem notícias agora — 2× para atualizar')]
+      this.homeMenuIndex = 1
+      return [t('◈  Sem notícias agora — toque para atualizar'), t('☰  Menu: atualizar, filtrar, salvos')]
     }
     // Diversidade: no máximo 2 manchetes por veículo nas 20 primeiras, para a
     // home não virar um feed de uma fonte só quando ela publica em rajada.
@@ -336,7 +341,7 @@ export class GlassesUI {
     const overflow: ArticleMeta[] = []
     const noise = /(lotof[aá]cil|quina|mega-sena|lotomania|sorteio|resultado do|hor[oó]scopo|bbb|celebridade)/i
     for (const article of this.feed) {
-      if (picked.length >= 20) break
+      if (picked.length >= HOME_ARTICLES) break
       const count = counts.get(article.sourceId) ?? 0
       const perSource = picked.length < 8 ? 1 : 2
       if (noise.test(article.title) && picked.length < 14) {
@@ -349,15 +354,20 @@ export class GlassesUI {
       }
     }
     for (const article of overflow) {
-      if (picked.length >= 20) break
+      if (picked.length >= HOME_ARTICLES) break
       picked.push(article)
     }
     this.homeArticles = picked
-    return picked.map((article) => {
+    this.homeMenuIndex = picked.length
+    const rows = picked.map((article) => {
       const source = this.sourceFor(article.sourceId)
       const prefix = source?.short ?? article.sourceId
       return cut(`${prefix} · ${article.title}`, 60)
     })
+    // Último item abre o menu de ações: na raiz o duplo toque é reservado
+    // ao diálogo de saída do sistema (regra do Even Hub).
+    rows.push(t('☰  Menu: atualizar, filtrar, salvos'))
+    return rows
   }
 
   private async run<T>(task: () => Promise<T>): Promise<T | null> {
@@ -407,7 +417,7 @@ export class GlassesUI {
           new TextContainerProperty({
             xPosition: 0, yPosition: 252, width: W, height: 36,
             paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: t('▲▼ rolar  ·  ● abrir  ·  2× menu'), isEventCapture: 0,
+            textColor: DIM, content: t('▲▼ rolar  ·  ● abrir  ·  2× sair'), isEventCapture: 0,
           }),
         ],
         listObject: [
@@ -482,9 +492,11 @@ export class GlassesUI {
 
   private onDouble() {
     if (!this.ready) return
-    if (this.mode === 'article') void this.showActions('article')
-    else if (this.mode === 'home') void this.showActions('home')
-    else if (this.mode === 'actions') void this.renderHome()
+    const action = doubleTapAction(this.mode)
+    // Raiz: diálogo de saída do sistema. Não limpar nada aqui — se o usuário
+    // cancelar, o app segue ativo; a limpeza fica no SYSTEM_EXIT_EVENT.
+    if (action === 'exit-dialog') void this.exit()
+    else if (action === 'actions') void this.showActions('article')
     else void this.renderHome()
   }
 
@@ -493,6 +505,7 @@ export class GlassesUI {
     if (this.mode === 'home') {
       const meta = this.homeArticles[index]
       if (meta) void this.showArticle(meta)
+      else if (index === this.homeMenuIndex) void this.showActions('home')
       else void this.deps.refresh()
       return
     }
@@ -776,8 +789,9 @@ export class GlassesUI {
       '',
       t('▲ ▼  navegar e virar página'),
       t('●    abrir a matéria'),
-      t('●●   2 toques: menu de ações'),
+      t('●●   2 toques na lista: sair'),
       t('2× em matéria abre o menu'),
+      t('☰ Menu: último item da lista'),
       '',
       '─'.repeat(34),
       '',
@@ -786,7 +800,7 @@ export class GlassesUI {
       '',
       t('O app atualiza sozinho a'),
       t('cada 15 minutos. Gesto manual:'),
-      t('2 toques → menu Atualizar.'),
+      t('☰ Menu → Atualizar.'),
     ].join('\n')
     this.pages = paginate(help, { width: BODY_W, height: BODY_H })
     this.page = 0
