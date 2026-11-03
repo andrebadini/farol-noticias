@@ -315,7 +315,7 @@ const EN: Record<string, string> = {
   'O app não tem login nem rastreamento. As notícias vêm de feeds públicos dos veículos; favoritos e ajustes ficam no armazenamento do seu celular via Even Hub.':
     'The app has no login and no tracking. News comes from public outlet feeds; favorites and settings stay in your phone storage via Even Hub.',
   'versão 1.0.0 · feito para Even Realities G2': 'version 1.0.0 · made for Even Realities G2',
-  'versão 1.0.1 · feito para Even Realities G2': 'version 1.0.0 · made for Even Realities G2',
+  'versão 1.0.1 · feito para Even Realities G2': 'version 1.0.1 · made for Even Realities G2',
 
   /* fontes e metadados */
   'monte seu farol': 'build your beacon',
