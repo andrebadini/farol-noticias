@@ -60,7 +60,7 @@ O webview de um app do Even Hub é um navegador de verdade: CORS vale, e a maior
 - `data/latest.json` — manchetes e metadados (leve, consultado com frequência);
 - `data/a/<id>.json` — texto completo de cada matéria (buscado só quando você abre).
 
-O GitHub Pages responde `Access-Control-Allow-Origin: *`, então o app consegue ler o snapshot em qualquer aparelho. O snapshot também é embutido no `.ehpk` como reserva offline.
+O GitHub Pages responde `Access-Control-Allow-Origin: *`, então o app consegue ler o snapshot em qualquer aparelho. Na build da loja, o snapshot gerado é retirado do `.ehpk`: o app usa o endpoint remoto e o cache do telefone; o snapshot local fica para desenvolvimento.
 
 O robô guarda um arquivo de matérias em cache (GitHub Actions cache) para não reextrair o mesmo texto a cada rodada, mantém 96 horas de edição e limita o volume por veículo. O resultado é auditável: cada matéria tem link, fonte, horário e resumo.
 
@@ -131,7 +131,7 @@ npm run news         # gera ./dist (snapshot completo)
 npm run snapshot     # copia o snapshot para public/data
 ```
 
-O snapshot local é ignorado pelo git; ele entra no build do `.ehpk` como reserva.
+O snapshot local é ignorado pelo git e fica fora do `.ehpk`; `npm run pack` remove `dist/data` antes de empacotar para não levar URLs de veículos para a revisão.
 
 ### Build e empacotamento
 

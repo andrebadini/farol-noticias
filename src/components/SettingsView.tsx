@@ -333,9 +333,9 @@ export function SettingsView({
         <span className="about__mark" aria-hidden="true">◈</span>
         <div>
           <strong>Além dos Pontos</strong>
-          <span>{t('versão 1.0.0 · feito para Even Realities G2')}</span>
-          <button className="about__link" onClick={() => window.open('https://github.com/andrebadini/farol-noticias', '_blank', 'noopener')}>
-            github.com/andrebadini/farol-noticias <ExternalIcon size={12} />
+          <span>{t('versão 1.0.1 · feito para Even Realities G2')}</span>
+          <button className="about__link" onClick={() => window.open('https://andrebadini.github.io/farol-noticias/', '_blank', 'noopener')}>
+            andrebadini.github.io/farol-noticias <ExternalIcon size={12} />
           </button>
         </div>
         <span className="about__check"><CheckIcon size={16} /></span>

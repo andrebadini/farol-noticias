@@ -1,7 +1,7 @@
 {
   "name": "farol-noticias",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -11,7 +11,9 @@
     "simulate": "evenhub-simulator -g http://localhost:5173",
     "news": "node aggregator/index.mjs",
     "snapshot": "node scripts/snapshot.mjs",
-    "pack": "npm run build && evenhub pack app.json dist -o farol-noticias.ehpk"
+    "check:bundle": "node scripts/pack.mjs --check",
+    "test": "node --test scripts/urls.test.mjs",
+    "pack": "npm run build && node scripts/pack.mjs"
   },
   "dependencies": {
     "@evenrealities/even_hub_sdk": "^0.0.16",
