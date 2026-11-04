@@ -43,10 +43,10 @@ export function MiniGlasses({
               </div>
             ))
           ) : (
-            <div className="mini-glasses__empty">{t('◈  Sem notícias agora — 2× para atualizar')}</div>
+            <div className="mini-glasses__empty">{t('◈  Sem notícias agora — toque para atualizar')}</div>
           )}
         </div>
-        <div className="mini-glasses__hint">{t('▲▼ rolar  ·  ● abrir  ·  2× menu')}</div>
+        <div className="mini-glasses__hint">{t('▲▼ rolar  ·  ● abrir  ·  2× sair')}</div>
       </div>
       <span className="mini-glasses__caption">{t('prévia aproximada do visor · 576 × 288')}</span>
     </div>

@@ -14,7 +14,7 @@ export function TipCard({ onDismiss, onOpenGlasses }: { onDismiss: () => void; o
       <div className="tip__body">
         <span className="eyebrow">{t('primeira vez aqui')}</span>
         <strong>{t('O jornal também mora nos óculos')}</strong>
-        <p>{t('Dois toques no G2 abrem o menu. Deslize para virar a página e salve aqui para ler lá.')}</p>
+        <p>{t('Na lista do G2, o último item abre o menu e dois toques saem. Deslize para virar a página e salve aqui para ler lá.')}</p>
         <div className="tip__actions">
           <button className="btn btn--ink btn--sm" onClick={onOpenGlasses}>
             <GlassesIcon size={16} />

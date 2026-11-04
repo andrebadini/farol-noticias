@@ -262,8 +262,8 @@ export function SettingsView({
         <div className="gesture-grid">
           <div><kbd>▲</kbd><span>{t('Deslizar')}</span><small>{t('navegar / virar página')}</small></div>
           <div><kbd>●</kbd><span>{t('1 toque')}</span><small>{t('abrir a matéria')}</small></div>
-          <div><kbd>●●</kbd><span>{t('2 toques')}</span><small>{t('menu de ações')}</small></div>
-          <div><kbd>↻</kbd><span>{t('Atualizar')}</span><small>{t('2 toques → Atualizar')}</small></div>
+          <div><kbd>●●</kbd><span>{t('2 toques')}</span><small>{t('sair (diálogo do sistema)')}</small></div>
+          <div><kbd>↻</kbd><span>{t('Atualizar')}</span><small>{t('☰ Menu → Atualizar')}</small></div>
         </div>
 
         <div className="glasses-actions">

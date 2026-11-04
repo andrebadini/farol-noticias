@@ -30,8 +30,8 @@ O plugin é um app web (Vite + React + TypeScript) que roda no WebView do Even H
 - **Busca por voz** quando o WebView expõe reconhecimento de fala; caso contrário, o app orienta o uso do ditado do teclado.
 - **Filtros** por categoria (política, economia, mundo, esportes, tecnologia, cultura, cidades, justiça, saúde, ciência) e por fonte, com persistência.
 - **Filtro por fonte também nos óculos**, refletido no celular.
-- **Gestos no G2**: deslizar para navegar, um toque para abrir, dois toques para o menu; dentro da matéria, um toque abre as ações e deslizar vira a página.
-- **Salvar nos óculos** com dois toques → ★ Salvar; o favorito aparece na hora no celular.
+- **Gestos no G2**: deslizar para navegar, um toque para abrir; na lista inicial, dois toques abrem o diálogo de saída do sistema e o último item (☰ Menu) abre o menu de ações; dentro da matéria, um ou dois toques abrem as ações e deslizar vira a página.
+- **Salvar nos óculos** abrindo a matéria e tocando → ★ Salvar; o favorito aparece na hora no celular.
 - **Atualização manual por gesto** nos óculos: 2 toques → ▶ Atualizar notícias.
 - **Interface clara/escura**, tipografia editorial (Instrument Serif + Inter Tight), ilustrações generativas sem imagens remotas.
 - **Sem login, sem analytics, sem rastreamento.**

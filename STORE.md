@@ -1,4 +1,4 @@
-# Publicação no Even Hub — Além dos Pontos 1.0.1
+# Publicação no Even Hub — Além dos Pontos 1.0.2
 
 Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com os textos prontos e os limites de cada campo.
 
@@ -14,21 +14,26 @@ Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com
 | **Ícone grande (se o portal pedir)** | [store/icon-1024.png](icon-1024.png) | PNG quadrado |
 | **Idioma da interface** | Português (Brasil) e English; automático pelo idioma do celular ou escolha manual | — |
 | **País / região** | Brasil | — |
-| **Versão** | `1.0.1` | semver |
+| **Versão** | `1.0.2` | semver |
 | **min_app_version** | `2.2.10` | exigido pelo SDK 0.0.16 |
 | **min_sdk_version** | `0.0.16` | SDK usado no build |
 | **Política de privacidade** | https://andrebadini.github.io/farol-noticias/privacy.html | URL pública |
 | **Site / suporte** | https://andrebadini.github.io/farol-noticias/ | URL pública |
-| **Pacote** | `alemdospontos-1.0.1.ehpk` | gerado por `npm run pack` |
+| **Pacote** | `alemdospontos-1.0.2.ehpk` | gerado por `npm run pack` |
 | **Package ID** | `com.andrebadini.alemdospontos` | reverse domain, minúsculo |
 
 ## Estado do envio (03/11/2026)
 
+- Build **1.0.1** foi **Rejected** em 02/11/2026: o revisor pediu que o duplo toque na página raiz
+  abra o diálogo de saída (`shutDownPageContainer(1)`). A **1.0.2** corrige isso: na lista inicial,
+  dois toques abrem o diálogo do sistema; o menu de ações passa a ser o último item da lista
+  (☰ Menu). Pacote `alemdospontos-1.0.2.ehpk`, 527.941 bytes, SHA-256 `eb396b7d9a250c1a1260a8dfb5f264083af1a2f8073e81776c5b649981626148`.
+  Ainda não enviada (`evenhub upload` + submit no portal).
 - Build **1.0.1** enviada pela CLI 0.2.0: **ID 130846, status `Private`**, 527.776 bytes (antes
   1.486.859 bytes). SHA-256 `d222fd4c2eb54fa97ba99acf0e3fc8ee752a3bfe57bc4a3a699252a60e67cf7f`;
   o download do Hub confere byte a byte.
-- A 1.0.0 continua **Rejected**. A 1.0.1 precisa ser submetida no portal: **Builds → 1.0.1 →
-  Public → Submit for review** (a CLI não faz esse passo).
+- A 1.0.0 e a 1.0.1 estão **Rejected**. Depois do upload, a 1.0.2 precisa ser submetida no portal:
+  **Builds → 1.0.2 → Public → Submit for review** (a CLI não faz esse passo).
 - O pacote não embute `dist/data`: o app busca o endpoint remoto autorizado e usa o cache do
   telefone. O `npm run pack` remove o snapshot e falha se sobrar URL fora da whitelist.
 
@@ -73,6 +78,12 @@ As capturas do celular estão em 1170×2532 (iPhone/Android 3×); as do visor es
 ## 6. Novidades desta versão (release notes)
 
 ```
+1.0.2 — saída pelo duplo toque
+
+• Na lista inicial dos óculos, dois toques abrem o diálogo de saída do sistema.
+• O menu de ações (atualizar, filtrar, salvos, idioma, ajuda) é o último item da lista.
+• Dentro da matéria, os gestos continuam iguais.
+
 1.0.1 — correção da revisão de rede
 
 • O pacote não cita mais o link de erro do React nem o snapshot de notícias embutido;
@@ -94,14 +105,14 @@ As capturas do celular estão em 1170×2532 (iPhone/Android 3×); as do visor es
 
 ## 7. Publicando pelo CLI (opção oficial)
 
-Pré-requisitos: `npm run pack` gera `alemdospontos-1.0.1.ehpk`; estar logado com `evenhub login`.
+Pré-requisitos: `npm run pack` gera `alemdospontos-1.0.2.ehpk`; estar logado com `evenhub login`.
 
 ```bash
 # 1. entre na sua conta Even
 npx evenhub login
 
 # 2. crie o app e o build Draft (só na primeira vez)
-npx evenhub create alemdospontos-1.0.1.ehpk \
+npx evenhub create alemdospontos-1.0.2.ehpk \
   --package-id com.andrebadini.alemdospontos \
   --name "Além dos Pontos" \
   --tagline "Brazil's news, beyond the headlines." \
@@ -113,7 +124,7 @@ npx evenhub ls
 
 # 4. publique uma nova versão depois de um build
 npm run pack
-npx evenhub upload alemdospontos-1.0.1.ehpk \
+npx evenhub upload alemdospontos-1.0.2.ehpk \
   -m "Network whitelist fix: no React error link and no bundled news snapshot; the app only references its authorized data endpoint." \
   --package-id com.andrebadini.alemdospontos
 
@@ -133,7 +144,7 @@ O `create` deixa o app em **Draft**; a publicação pública é feita no portal 
 1. Acesse o portal de desenvolvedor do Even Hub e crie um app com o `package_id` `com.andrebadini.alemdospontos`.
 2. Cole os campos da seção 1; use os textos de `store/description-pt.txt` e `store/description-en.txt`.
 3. Envie o ícone `store/icon-24.png` (o portal pode pedir também o `icon-1024.png`).
-4. Envie `alemdospontos-1.0.1.ehpk` como build.
+4. Envie `alemdospontos-1.0.2.ehpk` como build.
 5. Adicione as capturas de tela na ordem da seção 5.
 6. Informe a URL de privacidade e o repositório de suporte.
 7. Peça revisão. Enquanto o app está em Draft/Beta, teste no seu G2 com o QR de desenvolvimento (`npx evenhub qr --url http://<ip>:5173`).
@@ -142,7 +153,7 @@ O `create` deixa o app em **Draft**; a publicação pública é feita no portal 
 
 - [x] `app.json` válido (nome ≤20, package id reverso, versão semver, entrypoint `index.html`, permissões em array).
 - [x] `npm run build` sem erros de TypeScript.
-- [x] `npm run pack` gera `alemdospontos-1.0.1.ehpk`.
+- [x] `npm run pack` gera `alemdospontos-1.0.2.ehpk`.
 - [x] Snapshot remoto do GitHub Pages respondendo com CORS (`access-control-allow-origin: *`).
 - [x] Simulador: home, artigo, paginação, menu, filtro por fonte, atualização manual, salvar.
 - [x] Celular: capa, leitor, busca, filtros, fontes, salvos, ajustes, tema claro/escuro.
