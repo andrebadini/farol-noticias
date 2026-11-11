@@ -1,5 +1,7 @@
 import type { ArticleMeta, SourceInfo } from '../types'
 import { currentLanguage, t } from '../lib/i18n'
+import { newsClock } from '../lib/time'
+import { SourceBadge } from './SourceBadge'
 
 function cut(text: string, max: number): string {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text
@@ -23,7 +25,7 @@ export function MiniGlasses({
       seen.add(article.sourceId)
       return true
     })
-    .slice(0, 4)
+    .slice(0, 3)
   return (
     <div className="mini-glasses" role="img" aria-label={t('Prévia aproximada do que aparece nos óculos')}>
       <div className="mini-glasses__screen">
@@ -36,12 +38,20 @@ export function MiniGlasses({
         </div>
         <div className="mini-glasses__list">
           {items.length ? (
-            items.map((article, index) => (
-              <div key={article.id} className={`mini-glasses__row ${index === 0 ? 'is-active' : ''}`}>
-                <b>{sources.get(article.sourceId)?.short ?? article.sourceId}</b>
-                <span>{cut(article.title, 46)}</span>
-              </div>
-            ))
+            items.map((article, index) => {
+              const when = newsClock(article.publishedAt)
+              const source = sources.get(article.sourceId)
+              return (
+                <div key={article.id} className={`mini-glasses__row ${index === 0 ? 'is-active' : ''}`}>
+                  <div className="mini-glasses__source">
+                    <SourceBadge source={source} size="xs" fallback={article.sourceId} />
+                    <b>{source?.name ?? article.sourceId}</b>
+                    <i>{when ? when.clock : ''}</i>
+                  </div>
+                  <span>{cut(article.title, 80)}</span>
+                </div>
+              )
+            })
           ) : (
             <div className="mini-glasses__empty">{t('◈  Sem notícias agora — toque para atualizar')}</div>
           )}

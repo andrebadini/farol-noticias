@@ -3105,24 +3105,40 @@ p {
 
 .mini-glasses__row {
   display: flex;
-  gap: 5px;
-  padding: 2px 4px;
+  flex-direction: column;
+  padding: 1px 4px;
   border: 1px solid transparent;
   border-radius: 3px;
+  overflow: hidden;
+}
+
+.mini-glasses__source {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   white-space: nowrap;
+}
+
+.mini-glasses__source b {
+  font-weight: 800;
+  flex: 1;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.mini-glasses__row b {
-  opacity: 0.65;
-  font-weight: 700;
+.mini-glasses__source i {
+  font-style: normal;
+  opacity: 0.55;
   flex: none;
 }
 
 .mini-glasses__row span {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
 }
 
 .mini-glasses__row.is-active {
@@ -3556,4 +3572,13 @@ p {
   .ticker__viewport {
     overflow-x: auto;
   }
+}
+
+.mini-glasses .source-badge {
+  width: 12px;
+  height: 12px;
+  font-size: 5px;
+  border-radius: 3px;
+  background: var(--g2) !important;
+  color: #050604 !important;
 }
