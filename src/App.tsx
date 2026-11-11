@@ -30,7 +30,8 @@ import { Header } from './components/Header'
 import { Ticker } from './components/Ticker'
 import { FilterBar } from './components/FilterBar'
 import { Hero } from './components/Hero'
-import { Feed } from './components/Feed'
+import { Feed, FEED_PAGE } from './components/Feed'
+import { FeedMenu } from './components/FeedMenu'
 import { SourceRail } from './components/SourceRail'
 import { BottomNav } from './components/BottomNav'
 import { Reader } from './components/Reader'
@@ -110,6 +111,10 @@ export default function App() {
   const [recent, setRecent] = useState<string[]>([])
   const [reader, setReader] = useState<ReaderState | null>(null)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [feedMenuOpen, setFeedMenuOpen] = useState(false)
+  const [feedVisible, setFeedVisible] = useState(FEED_PAGE)
+  const feedAnchor = useRef<{ id: string; index: number; viewportTop: number; scrollY: number; tab: TabId } | null>(null)
+  const pendingFeedRestore = useRef(false)
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const [glassesStatus, setGlassesStatus] = useState<GlassesStatus>({ state: 'connecting' })
   const [booting, setBooting] = useState(true)
@@ -252,28 +257,77 @@ export default function App() {
   )
   toggleSaveRef.current = toggleSave
 
-  const openArticle = useCallback(async (meta: ArticleMeta) => {
-    setReader({ meta, article: null, loading: true })
-    const isSaved = savedRef.current.some((entry) => entry.id === meta.id)
-    if (isSaved) {
-      const offlineCopy = await loadBookmark(meta.id)
-      if (offlineCopy) {
-        setReader({ meta, article: offlineCopy, loading: false })
-        void fetchArticle(meta).then((full) => {
-          if (full?.content) {
-            setReader((current) =>
-              current && current.meta.id === meta.id ? { ...current, article: full, loading: false } : current,
-            )
-          }
-        })
-        return
+  const openArticle = useCallback(
+    async (meta: ArticleMeta) => {
+      const row = document.getElementById(`article-${meta.id}`)
+      if (row && tab === 'agora') {
+        const rows = Array.from(document.querySelectorAll<HTMLElement>('[data-article-id]'))
+        const index = rows.findIndex((item) => item.dataset.articleId === meta.id)
+        feedAnchor.current = {
+          id: meta.id,
+          index: Math.max(0, index),
+          viewportTop: row.getBoundingClientRect().top,
+          scrollY: window.scrollY,
+          tab,
+        }
+      } else {
+        feedAnchor.current = null
       }
-    }
-    const full = await fetchArticle(meta)
-    setReader((current) => (current && current.meta.id === meta.id ? { meta, article: full, loading: false } : current))
+      setReader({ meta, article: null, loading: true })
+      const isSaved = savedRef.current.some((entry) => entry.id === meta.id)
+      if (isSaved) {
+        const offlineCopy = await loadBookmark(meta.id)
+        if (offlineCopy) {
+          setReader({ meta, article: offlineCopy, loading: false })
+          void fetchArticle(meta).then((full) => {
+            if (full?.content) {
+              setReader((current) =>
+                current && current.meta.id === meta.id ? { ...current, article: full, loading: false } : current,
+              )
+            }
+          })
+          return
+        }
+      }
+      const full = await fetchArticle(meta)
+      setReader((current) => (current && current.meta.id === meta.id ? { meta, article: full, loading: false } : current))
+    },
+    [tab],
+  )
+
+  const closeReader = useCallback(() => {
+    pendingFeedRestore.current = true
+    setReader(null)
   }, [])
 
-  const closeReader = useCallback(() => setReader(null), [])
+  /* Volta para a linha do artigo aberto, mesmo se a edição tiver mudado. */
+  useEffect(() => {
+    if (reader || !pendingFeedRestore.current) return
+    pendingFeedRestore.current = false
+    const anchor = feedAnchor.current
+    if (!anchor || anchor.tab !== 'agora') return
+    setFeedVisible((value) => Math.max(value, anchor.index + 1))
+    let second = 0
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => {
+        const row = document.getElementById(`article-${anchor.id}`)
+        if (row) {
+          const top = row.getBoundingClientRect().top + window.scrollY - anchor.viewportTop
+          window.scrollTo(0, Math.max(0, top))
+        } else {
+          window.scrollTo(0, Math.max(0, anchor.scrollY))
+        }
+      })
+    })
+    return () => {
+      cancelAnimationFrame(first)
+      cancelAnimationFrame(second)
+    }
+  }, [reader])
+
+  useEffect(() => {
+    setFeedVisible(FEED_PAGE)
+  }, [category, sourceFilter, settings.enabledSources])
 
   const retryFullText = useCallback(async () => {
     const current = reader
@@ -713,6 +767,9 @@ export default function App() {
                     onlineSources={online}
                     onResetFilters={resetFilters}
                     hasFilters={hasFilters}
+                    visible={feedVisible}
+                    onLoadOlder={() => setFeedVisible((value) => Math.min(value + FEED_PAGE, listArticles.length))}
+                    onOpenMenu={() => setFeedMenuOpen(true)}
                   />
                 )}
               </>
@@ -802,6 +859,47 @@ export default function App() {
           onToggle={toggleSource}
           onAll={() => updateSettings({ enabledSources: null })}
           onClose={() => setSheetOpen(false)}
+        />
+      )}
+
+      {feedMenuOpen && (
+        <FeedMenu
+          total={feed.length}
+          savedCount={saved.length}
+          updatedAt={generatedLabel(latest?.generatedAt ?? '')}
+          hasFilters={hasFilters}
+          glassesLabel={
+            glassesStatus.state === 'ready'
+              ? t('óculos conectados')
+              : glassesStatus.state === 'connecting'
+                ? t('procurando óculos…')
+                : t('modo navegador')
+          }
+          onRefresh={() => {
+            setFeedMenuOpen(false)
+            void refresh(true)
+          }}
+          onFilter={() => {
+            setFeedMenuOpen(false)
+            setSheetOpen(true)
+          }}
+          onSaved={() => {
+            setFeedMenuOpen(false)
+            changeTab('salvos')
+          }}
+          onSettings={() => {
+            setFeedMenuOpen(false)
+            changeTab('ajustes')
+          }}
+          onResetFilters={() => {
+            setFeedMenuOpen(false)
+            resetFilters()
+          }}
+          onTop={() => {
+            setFeedMenuOpen(false)
+            window.scrollTo({ top: 0, behavior: 'smooth' })
+          }}
+          onClose={() => setFeedMenuOpen(false)}
         />
       )}
 

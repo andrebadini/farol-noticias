@@ -1,7 +1,10 @@
-1.0.0 — primeira edição do Além dos Pontos
+1.0.3 — lista mais clara e lote mais antigo
 
-• 23 veículos brasileiros em uma edição única, no celular e nos óculos Even Realities G2.
-• Interface em português e inglês, automática pelo idioma do celular ou escolha manual nos Ajustes e no menu dos óculos.
-• Notícias além do óbvio: filtros por categoria/fonte, busca por voz/teclado, salvos offline e leitura no G2.
-• Texto completo para matérias resumidas, com leitura pública (Jina Reader) e snapshots públicos do Internet Archive.
-• Menu da matéria com “Últimas notícias”; duplo toque no menu volta à lista; “Voltar à leitura” retorna à matéria.
+• No celular, o nome do veículo aparece em negrito numa linha acima da manchete.
+• O horário de cada notícia fica à direita, no fuso do aparelho e com a UTC indicada.
+• Ao fechar a leitura, a lista volta na linha da matéria que estava aberta.
+• No fim da lista há um menu para atualizar, filtrar, salvar ou abrir os ajustes.
+• Arraste a lista para cima, no fim, para carregar o lote imediatamente mais antigo —
+  e repita para os lotes seguintes.
+• Nos óculos, a matéria aberta volta ao topo da lista e o item "▼ Notícias mais antigas"
+  carrega o próximo lote; a matéria mostra a fonte em destaque e o horário com UTC.

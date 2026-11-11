@@ -12,7 +12,7 @@ import {
 import type { ArticleFull, ArticleMeta, SavedIndexEntry, SourceInfo } from '../types'
 import { getBridge } from './bridge'
 import { paginate } from './paginate'
-import { clock, relativeTime } from './time'
+import { clock, newsClock, relativeTime } from './time'
 import { currentLanguage, t, type Lang } from './i18n'
 
 export type GlassesState = 'connecting' | 'ready' | 'unavailable' | 'error'
@@ -53,8 +53,8 @@ const BODY_W = 560
 const BODY_H = 216
 const BRIGHT = 4
 const DIM = 2
-// 19 manchetes + item de menu = 20 itens na lista da home.
-const HOME_ARTICLES = 19
+// 18 manchetes + "mais antigas" + menu = 20 itens na lista da home.
+const HOME_ARTICLES = 18
 
 const encoder = new TextEncoder()
 
@@ -86,6 +86,11 @@ export class GlassesUI {
   private mode: GlassesMode = 'home'
   private previousMode: GlassesMode = 'home'
   private homeMenuIndex = -1
+  private homeOlderIndex = -1
+  private homePage = 0
+  private homePageStart = 0
+  private homeNextCursor = 0
+  private homeReturnId: string | null = null
   private feed: ArticleMeta[] = []
   private sources: SourceInfo[] = []
   private saved: SavedIndexEntry[] = []
@@ -240,11 +245,13 @@ export class GlassesUI {
       .map((a) => a.id)
       .join(',')}|${saved.map((entry) => entry.id).join(',')}`
     const changed = signature !== this.feedSignature
+    const filterChanged = filter !== this.filter
     this.feed = feed
     this.sources = sources
     this.saved = saved
     this.filter = filter
     this.feedSignature = signature
+    if (filterChanged) this.resetHome()
     if (!this.ready) return
     if (this.pendingRestore) {
       const snapshot = this.pendingRestore
@@ -289,6 +296,7 @@ export class GlassesUI {
 
   async showArticle(meta: ArticleMeta): Promise<void> {
     const article = (await this.deps.loadArticle(meta)) ?? { ...meta, content: meta.summary }
+    this.homeReturnId = meta.id
     this.current = article
     this.mode = 'article'
     this.page = 0
@@ -302,14 +310,18 @@ export class GlassesUI {
 
   private paginateArticle(article: ArticleFull): string[] {
     const source = this.sourceFor(article.sourceId)
-    const meta = `${source?.name ?? article.sourceId} · ${relativeTime(article.publishedAt)} · ${t('{n} min de leitura', { n: article.readingMin })}`
+    const when = newsClock(article.publishedAt)
+    const stamp = when
+      ? `${when.day} · ${when.clock} ${when.zone}`
+      : relativeTime(article.publishedAt)
+    const meta = `${stamp} · ${t('{n} min de leitura', { n: article.readingMin })}`
     const body =
       (article.content || article.summary || '').trim() ||
       t('Esta matéria ainda não tem texto completo no Além dos Pontos. Abra a versão original no celular.')
     const note = article.full
       ? ''
       : `\n\n${t('(Resumo do Além dos Pontos. A íntegra está disponível no site da fonte.)')}`
-    const text = `▌ ${article.title}\n\n${meta}\n\n${body}${note}\n\n— ALÉM DOS PONTOS`
+    const text = `▌ ${article.title}\n\n${(source?.name ?? article.sourceId).toUpperCase()}\n${meta}\n\n${body}${note}\n\n— ALÉM DOS PONTOS`
     return paginate(text, { width: BODY_W, height: BODY_H })
   }
 
@@ -325,49 +337,103 @@ export class GlassesUI {
     if (this.notice) return this.notice
     const filtered = this.filter ? this.sourceFor(this.filter)?.name ?? this.filter : 'tudo'
     const filterLabel = filtered === 'tudo' ? t('TUDO') : filtered.toUpperCase()
+    if (this.homePage > 0 && this.homeArticles.length) {
+      const first = this.homePageStart + 1
+      const last = Math.min(this.feed.length, this.homePageStart + this.homeArticles.length)
+      return `${filterLabel} · ${first}–${last} ${t('de')} ${this.feed.length}`
+    }
     return `${filterLabel} · ${t('{n} NOTÍCIAS', { n: this.feed.length })}`
   }
 
   private listItems(): string[] {
     if (!this.feed.length) {
       this.homeArticles = []
+      this.homeOlderIndex = -1
       this.homeMenuIndex = 1
       return [t('◈  Sem notícias agora — toque para atualizar'), t('☰  Menu: atualizar, filtrar, salvos')]
     }
-    // Diversidade: no máximo 2 manchetes por veículo nas 20 primeiras, para a
-    // home não virar um feed de uma fonte só quando ela publica em rajada.
-    const picked: ArticleMeta[] = []
-    const counts = new Map<string, number>()
-    const overflow: ArticleMeta[] = []
-    const noise = /(lotof[aá]cil|quina|mega-sena|lotomania|sorteio|resultado do|hor[oó]scopo|bbb|celebridade)/i
-    for (const article of this.feed) {
-      if (picked.length >= HOME_ARTICLES) break
-      const count = counts.get(article.sourceId) ?? 0
-      const perSource = picked.length < 8 ? 1 : 2
-      if (noise.test(article.title) && picked.length < 14) {
-        overflow.push(article)
-      } else if (count < perSource) {
-        picked.push(article)
-        counts.set(article.sourceId, count + 1)
-      } else {
-        overflow.push(article)
-      }
+    if (this.homePage > 0 && this.homePageStart >= this.feed.length) this.resetHome()
+    let batch: ArticleMeta[]
+    if (this.homePage === 0) {
+      batch = this.pickHomeArticles()
+    } else {
+      batch = this.feed.slice(this.homePageStart, this.homePageStart + HOME_ARTICLES)
+      this.homeNextCursor = this.homePageStart + batch.length
     }
-    for (const article of overflow) {
-      if (picked.length >= HOME_ARTICLES) break
-      picked.push(article)
+    // Retomada: o artigo que estava aberto volta para o topo, onde o foco da
+    // lista nativa começa depois de um rebuild.
+    if (this.homeReturnId) {
+      const at = batch.findIndex((article) => article.id === this.homeReturnId)
+      if (at > 0) batch = [batch[at], ...batch.slice(0, at), ...batch.slice(at + 1)]
     }
-    this.homeArticles = picked
-    this.homeMenuIndex = picked.length
-    const rows = picked.map((article) => {
+    this.homeArticles = batch
+    const rows = batch.map((article) => {
       const source = this.sourceFor(article.sourceId)
-      const prefix = source?.short ?? article.sourceId
-      return cut(`${prefix} · ${article.title}`, 60)
+      const prefix = (source?.name ?? source?.short ?? article.sourceId).toUpperCase()
+      const mark = this.homeReturnId === article.id ? '▶ ' : ''
+      return cut(`${mark}${prefix} · ${article.title}`, 60)
     })
+    const hasOlder =
+      this.homePage === 0
+        ? this.homeNextCursor < this.feed.length
+        : this.homePageStart + batch.length < this.feed.length
+    this.homeOlderIndex = hasOlder ? rows.length : -1
+    if (hasOlder) rows.push(t('▼  Notícias mais antigas'))
     // Último item abre o menu de ações: na raiz o duplo toque é reservado
     // ao diálogo de saída do sistema (regra do Even Hub).
     rows.push(t('☰  Menu: atualizar, filtrar, salvos'))
+    this.homeMenuIndex = rows.length - 1
     return rows
+  }
+
+  /** Primeiro lote: manchetes recentes com diversidade de veículos. */
+  private pickHomeArticles(): ArticleMeta[] {
+    const picked: ArticleMeta[] = []
+    const overflow: Array<{ article: ArticleMeta; index: number }> = []
+    const counts = new Map<string, number>()
+    const noise = /(lotof[aá]cil|quina|mega-sena|lotomania|sorteio|resultado do|hor[oó]scopo|bbb|celebridade)/i
+    let last = -1
+    for (let index = 0; index < this.feed.length; index += 1) {
+      if (picked.length >= HOME_ARTICLES) break
+      const article = this.feed[index]
+      const count = counts.get(article.sourceId) ?? 0
+      const perSource = picked.length < 8 ? 1 : 2
+      if (noise.test(article.title) && picked.length < 14) {
+        overflow.push({ article, index })
+      } else if (count < perSource) {
+        picked.push(article)
+        counts.set(article.sourceId, count + 1)
+        last = index
+      } else {
+        overflow.push({ article, index })
+      }
+    }
+    for (const item of overflow) {
+      if (picked.length >= HOME_ARTICLES) break
+      picked.push(item.article)
+      last = Math.max(last, item.index)
+    }
+    // O lote seguinte começa depois de tudo o que este lote considerou,
+    // para que as notícias carregadas sejam realmente mais antigas.
+    this.homeNextCursor = Math.max(0, last + 1)
+    return picked
+  }
+
+  private resetHome(): void {
+    this.homePage = 0
+    this.homePageStart = 0
+    this.homeNextCursor = 0
+    this.homeReturnId = null
+  }
+
+  private goOlder(): void {
+    if (!this.ready || this.mode !== 'home') return
+    const start = this.homePage === 0 ? this.homeNextCursor : this.homePageStart + this.homeArticles.length
+    if (start >= this.feed.length) return
+    this.homePageStart = start
+    this.homePage += 1
+    this.homeReturnId = null
+    void this.renderHome()
   }
 
   private async run<T>(task: () => Promise<T>): Promise<T | null> {
@@ -503,9 +569,16 @@ export class GlassesUI {
   private onListSelect(index: number) {
     if (!this.ready) return
     if (this.mode === 'home') {
+      if (index === this.homeMenuIndex) {
+        void this.showActions('home')
+        return
+      }
+      if (index === this.homeOlderIndex) {
+        this.goOlder()
+        return
+      }
       const meta = this.homeArticles[index]
       if (meta) void this.showArticle(meta)
-      else if (index === this.homeMenuIndex) void this.showActions('home')
       else void this.deps.refresh()
       return
     }
@@ -524,6 +597,7 @@ export class GlassesUI {
         this.filter = source.id
         this.deps.setFilter(source.id)
       }
+      this.resetHome()
       void this.renderHome()
       return
     }
@@ -649,8 +723,12 @@ export class GlassesUI {
     }
     this.feed = this.deps.getFeed()
     this.saved = this.deps.getSaved()
-    if (wasArticle && this.current) await this.renderArticle()
-    else await this.renderHome()
+    if (wasArticle && this.current) {
+      await this.renderArticle()
+    } else {
+      this.resetHome()
+      await this.renderHome()
+    }
     this.scheduleNoticeClear()
   }
 
@@ -792,6 +870,7 @@ export class GlassesUI {
       t('●●   2 toques na lista: sair'),
       t('2× em matéria abre o menu'),
       t('☰ Menu: último item da lista'),
+      t('▼  carrega o lote mais antigo'),
       '',
       '─'.repeat(34),
       '',
@@ -871,6 +950,7 @@ export class GlassesUI {
       this.pendingRestore = snapshot
       return
     }
+    this.resetHome()
     await this.renderHome()
   }
 
