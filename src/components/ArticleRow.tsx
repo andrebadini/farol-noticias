@@ -1,6 +1,6 @@
 import type { ArticleMeta, SourceInfo } from '../types'
 import { CATEGORY_META } from '../data/meta'
-import { relativeTime } from '../lib/time'
+import { newsClock } from '../lib/time'
 import { BookmarkFilledIcon, BookmarkIcon, TrashIcon } from './Icons'
 import { SourceBadge } from './SourceBadge'
 import { t } from '../lib/i18n'
@@ -48,6 +48,7 @@ export function ArticleRow({
   variant?: 'default' | 'saved' | 'compact'
 }) {
   const category = CATEGORY_META[article.category] ?? CATEGORY_META.geral
+  const when = newsClock(article.publishedAt)
   const flat = (value: string) =>
     value
       .normalize('NFD')
@@ -60,18 +61,20 @@ export function ArticleRow({
     (flat(article.summary).startsWith(flat(article.title).slice(0, 50)) ||
       flat(article.title).startsWith(flat(article.summary).slice(0, 50)))
   return (
-    <article className={`row row--${variant} ${typeof index === 'number' ? 'row--numbered' : ''}`}>
+    <article
+      className={`row row--${variant} ${typeof index === 'number' ? 'row--numbered' : ''}`}
+      id={`article-${article.id}`}
+      data-article-id={article.id}
+    >
       {typeof index === 'number' && (
         <span className="row__index" aria-hidden="true">
           {String(index + 1).padStart(2, '0')}
         </span>
       )}
       <button className="row__main" onClick={onOpen}>
-        <span className="row__meta">
+        <span className="row__source-line">
           <SourceBadge source={source} size="xs" />
-          <span className="row__source">{source?.short ?? article.sourceId}</span>
-          <span className="row__sep" aria-hidden="true">·</span>
-          <time dateTime={article.publishedAt}>{relativeTime(article.publishedAt)}</time>
+          <strong className="row__source">{source?.name ?? source?.short ?? article.sourceId}</strong>
           {!article.full && <span className="row__tag">{t('resumo')}</span>}
         </span>
         <span className="row__title">
@@ -90,20 +93,34 @@ export function ArticleRow({
           <span>{t('{n} min', { n: article.readingMin })}</span>
         </span>
       </button>
-      <button
-        className={`row__save ${saved ? 'is-saved' : ''}`}
-        onClick={onToggleSave}
-        aria-pressed={saved}
-        aria-label={t(saved ? 'Remover "{title}" dos salvos' : 'Salvar "{title}"', { title: article.title })}
-      >
-        {variant === 'saved' ? (
-          <TrashIcon size={19} />
-        ) : saved ? (
-          <BookmarkFilledIcon size={19} />
-        ) : (
-          <BookmarkIcon size={19} />
+      <div className="row__rail">
+        {when && (
+          <time
+            className="row__time"
+            dateTime={article.publishedAt}
+            title={when.full}
+            aria-label={t('Publicada em {when}', { when: when.full })}
+          >
+            <span className="row__day">{when.day}</span>
+            <span className="row__clock">{when.clock}</span>
+            <span className="row__zone">{when.zone}</span>
+          </time>
         )}
-      </button>
+        <button
+          className={`row__save ${saved ? 'is-saved' : ''}`}
+          onClick={onToggleSave}
+          aria-pressed={saved}
+          aria-label={t(saved ? 'Remover "{title}" dos salvos' : 'Salvar "{title}"', { title: article.title })}
+        >
+          {variant === 'saved' ? (
+            <TrashIcon size={19} />
+          ) : saved ? (
+            <BookmarkFilledIcon size={19} />
+          ) : (
+            <BookmarkIcon size={19} />
+          )}
+        </button>
+      </div>
     </article>
   )
 }
