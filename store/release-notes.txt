@@ -1,3 +1,11 @@
+1.0.4 — HUD com veículo em destaque
+
+• Nos óculos, cada notícia mostra o logo e o nome do veículo em negrito acima da manchete.
+• O horário local da notícia aparece à direita de cada item.
+• Ao fechar a leitura, o cursor volta à matéria que estava aberta.
+• Arraste a lista para percorrer todas as notícias, até as mais antigas, de três em três.
+• O menu fica acima da 1ª notícia e também no fim da lista.
+
 1.0.3 — lista mais clara e lote mais antigo
 
 • No celular, o nome do veículo aparece em negrito numa linha acima da manchete.
