@@ -1,4 +1,4 @@
-# Publicação no Even Hub — Além dos Pontos 1.0.4
+# Publicação no Even Hub — Além dos Pontos 1.1.0
 
 Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com os textos prontos e os limites de cada campo.
 
@@ -14,16 +14,24 @@ Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com
 | **Ícone grande (se o portal pedir)** | [store/icon-1024.png](icon-1024.png) | PNG quadrado |
 | **Idioma da interface** | Português (Brasil) e English; automático pelo idioma do celular ou escolha manual | — |
 | **País / região** | Brasil | — |
-| **Versão** | `1.0.4` | semver |
+| **Versão** | `1.1.0` | semver |
 | **min_app_version** | `2.2.10` | exigido pelo SDK 0.0.16 |
 | **min_sdk_version** | `0.0.16` | SDK usado no build |
 | **Política de privacidade** | https://andrebadini.github.io/farol-noticias/privacy.html | URL pública |
 | **Site / suporte** | https://andrebadini.github.io/farol-noticias/ | URL pública |
-| **Pacote** | `alemdospontos-1.0.4.ehpk` | gerado por `npm run pack` |
+| **Pacote** | `alemdospontos-1.1.0.ehpk` | gerado por `npm run pack` |
 | **Package ID** | `com.andrebadini.alemdospontos` | reverse domain, minúsculo |
 
 ## Estado do envio (11/11/2026)
 
+- **Build 1.1.0 em preparação** (ainda não empacotada nem enviada): redesign completo do HUD. Abertura
+  animada (três pontos + farol que emite ondas); home "destaque fixo" — a notícia em foco ocupa
+  sempre o mesmo card com borda arredondada, com o veículo em peso normal (sem negrito) e a manchete
+  como protagonista, "A seguir" com as duas próximas e rodapé com progresso e teclas em relevo;
+  indicador circular de carregamento animado; leitor com anel de progresso e tempo restante;
+  menu/fontes/salvos em moldura com cabeçalho e teclas. Animações usam imagens pequenas pré-renderizadas
+  escolhidas pelo relógio. Desempenho no aparelho real ainda não medido. Após `npm run pack`,
+  registrar aqui tamanho e SHA-256.
 - **1.0.4 enviada pelo portal em 11/11/2026 e submetida como Public: status `In Review`.** Para isso a
   revisão pendente da 1.0.3 foi cancelada (o portal recusa um segundo envio com "invalid parameter"
   enquanto outra build está em revisão); a 1.0.3 ficou `Private`. A build pública segue sendo a 1.0.2.
@@ -90,6 +98,16 @@ As capturas do celular estão em 1170×2532 (iPhone/Android 3×); as do visor es
 ## 6. Novidades desta versão (release notes)
 
 ```
+1.1.0 — HUD redesenhado
+
+• Abertura animada: três pontos acendem e um farol emite ondas para além deles.
+• A manchete é a protagonista: card em destaque com borda, e o veículo em peso normal,
+  mais discreto, numa linha com o selo em contorno.
+• O foco fica sempre no mesmo lugar: as notícias passam pelo card, com "A seguir" logo abaixo.
+• Indicador circular de carregamento animado ao atualizar e ao abrir matérias.
+• Leitor com anel de progresso, tempo restante e teclas em relevo como dica de gestos.
+• Menu, fontes e salvos com moldura própria; a ajuda traz os gestos atuais.
+
 1.0.4 — HUD com veículo em destaque
 
 • Nos óculos, cada notícia mostra o logo e o nome do veículo em negrito acima da manchete.
@@ -136,14 +154,14 @@ As capturas do celular estão em 1170×2532 (iPhone/Android 3×); as do visor es
 
 ## 7. Publicando pelo CLI (opção oficial)
 
-Pré-requisitos: `npm run pack` gera `alemdospontos-1.0.4.ehpk`; estar logado com `evenhub login`.
+Pré-requisitos: `npm run pack` gera `alemdospontos-1.1.0.ehpk`; estar logado com `evenhub login`.
 
 ```bash
 # 1. entre na sua conta Even
 npx evenhub login
 
 # 2. crie o app e o build Draft (só na primeira vez)
-npx evenhub create alemdospontos-1.0.4.ehpk \
+npx evenhub create alemdospontos-1.1.0.ehpk \
   --package-id com.andrebadini.alemdospontos \
   --name "Além dos Pontos" \
   --tagline "Brazil's news, beyond the headlines." \
@@ -155,7 +173,7 @@ npx evenhub ls
 
 # 4. publique uma nova versão depois de um build
 npm run pack
-npx evenhub upload alemdospontos-1.0.4.ehpk \
+npx evenhub upload alemdospontos-1.1.0.ehpk \
   -m "Lista: fonte em negrito, horário local com UTC, retorno à posição, menu no fim e lote mais antigo por gesto; nos óculos, retomada da matéria e lote anterior." \
   --package-id com.andrebadini.alemdospontos
 
@@ -175,7 +193,7 @@ O `create` deixa o app em **Draft**; a publicação pública é feita no portal 
 1. Acesse o portal de desenvolvedor do Even Hub e crie um app com o `package_id` `com.andrebadini.alemdospontos`.
 2. Cole os campos da seção 1; use os textos de `store/description-pt.txt` e `store/description-en.txt`.
 3. Envie o ícone `store/icon-24.png` (o portal pode pedir também o `icon-1024.png`).
-4. Envie `alemdospontos-1.0.4.ehpk` como build.
+4. Envie `alemdospontos-1.1.0.ehpk` como build.
 5. Adicione as capturas de tela na ordem da seção 5.
 6. Informe a URL de privacidade e o repositório de suporte.
 7. Peça revisão. Enquanto o app está em Draft/Beta, teste no seu G2 com o QR de desenvolvimento (`npx evenhub qr --url http://<ip>:5173`).
@@ -184,7 +202,7 @@ O `create` deixa o app em **Draft**; a publicação pública é feita no portal 
 
 - [x] `app.json` válido (nome ≤20, package id reverso, versão semver, entrypoint `index.html`, permissões em array).
 - [x] `npm run build` sem erros de TypeScript.
-- [x] `npm run pack` gera `alemdospontos-1.0.4.ehpk`.
+- [x] `npm run pack` gera `alemdospontos-1.1.0.ehpk`.
 - [x] Snapshot remoto do GitHub Pages respondendo com CORS (`access-control-allow-origin: *`).
 - [x] Simulador: home, artigo, paginação, menu, filtro por fonte, atualização manual, salvar.
 - [x] Celular: capa, leitor, busca, filtros, fontes, salvos, ajustes, tema claro/escuro.
