@@ -24,6 +24,9 @@ Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com
 
 ## Estado do envio (11/11/2026)
 
+- **1.0.4 enviada pelo portal em 11/11/2026 e submetida como Public: status `In Review`.** Para isso a
+  revisão pendente da 1.0.3 foi cancelada (o portal recusa um segundo envio com "invalid parameter"
+  enquanto outra build está em revisão); a 1.0.3 ficou `Private`. A build pública segue sendo a 1.0.2.
 - Build **1.0.4** empacotada em 11/11/2026 (`alemdospontos-1.0.4.ehpk`, 533.557 bytes, SHA-256 `85321b3f69fc20adcfde697842693776c1e615b4e625a060f6abbe8c16f12f74`): nos óculos, cada notícia mostra
   o veículo em negrito com o logo acima da manchete (até 2 linhas) e o horário local à direita; o
   cursor volta à matéria aberta; a lista é contínua até as mais antigas (3 por página); o menu fica
