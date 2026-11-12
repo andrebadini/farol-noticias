@@ -24,7 +24,10 @@ Tudo o que você precisa colar no portal do Even Hub (ou passar para o CLI), com
 
 ## Estado do envio (11/11/2026)
 
-- **Build 1.1.0 em preparação** (ainda não empacotada nem enviada): redesign completo do HUD. Abertura
+- **Build 1.1.0 enviada pelo portal em 11/11/2026 e submetida como Public: status `In Review`**
+  (`alemdospontos-1.1.0.ehpk`, 537.991 bytes, SHA-256
+  `31b1bbbe8dfeba6dfc72c2755c55924feaca1a68a80c616df0b81fd1e44a0195`). A revisão da 1.0.4 foi cancelada
+  para dar lugar a ela (1.0.4 e 1.0.3 ficaram `Private`; a pública segue sendo a 1.0.2). Conteúdo: redesign completo do HUD. Abertura
   animada (três pontos + farol que emite ondas); home "destaque fixo" — a notícia em foco ocupa
   sempre o mesmo card com borda arredondada, com o veículo em peso normal (sem negrito) e a manchete
   como protagonista, "A seguir" com as duas próximas e rodapé com progresso e teclas em relevo;
