@@ -13,12 +13,32 @@ import {
   type EvenAppBridge,
 } from '@evenrealities/even_hub_sdk'
 import type { ArticleFull, ArticleMeta, SavedIndexEntry, SourceInfo } from '../types'
+import { CATEGORY_META } from '../data/meta'
 import { getBridge } from './bridge'
 import { paginate } from './paginate'
 import { getTextWidth, measureTextWrap, pxTruncate } from '@evenrealities/pretext'
 import { clock, newsClock, relativeTime } from './time'
-import { SOURCE_LINE_HEIGHT, SOURCE_LINE_WIDTH, blankSourceLine, menuLineArt, sourceLineArt, sourceLineKey } from './glasses-art'
-import { HOME_ROWS, clampHomeIndex, pageStartOf, slotItem } from './home-window'
+import {
+  BRAND_SIZE,
+  KEYS_H,
+  KEYS_W,
+  SPLASH_H,
+  SPLASH_W,
+  VEHICLE_H,
+  VEHICLE_W,
+  brandMark,
+  keycapsArt,
+  menuLineArt,
+  progressRing,
+  sourceLineArt,
+  sourceLineKey,
+  spinnerFrame,
+  splashFrame,
+  type KeycapItem,
+} from './glasses-art'
+import { Animator, type AnimFrame } from './animator'
+import { SPLASH_MAX_MS, SPLASH_MIN_MS, remainingMinutes, ringStep, spinnerIndex, splashDecision } from './hud-math'
+import { clampHomeIndex, itemAt, nextItems, progressBar, progressOf } from './home-window'
 import { currentLanguage, t, type Lang } from './i18n'
 
 export type GlassesState = 'connecting' | 'ready' | 'unavailable' | 'error'
@@ -39,7 +59,7 @@ export interface GlassesSnapshot {
   homeIndex?: number
 }
 
-type GlassesMode = GlassesScreen
+type GlassesMode = GlassesScreen | 'splash'
 
 export interface GlassesDeps {
   getFeed: () => ArticleMeta[]
@@ -60,44 +80,72 @@ const BODY_W = 560
 const BODY_H = 216
 const BRIGHT = 4
 const DIM = 2
+const APP = 'ALÉM DOS PONTOS'
+const OPEN_TIMEOUT_MS = 8000
+const SPINNER_INTERVAL_MS = 250
+const SPLASH_INTERVAL_MS = 250
 
-/**
- * Home própria do HUD: a lista nativa do firmware é uma linha só e não aceita
- * negrito nem logo por item. Aqui desenhamos a linha "logo + veículo" em
- * bitmap (negrito real); manchete e horário são containers de texto.
- */
-const HOME_ROW_TOP = [30, 116, 202]
-const HOME_HEAD_W = 564
-const HOME_TITLE_W = 564
-const HOME_TITLE_H = 54
-const HOME_TIME_X = 396
-const HOME_TIME_W = 174
-const HOME_ID_HEAD = 1
-const HOME_ID_LOGO = 2
-const HOME_ID_TITLE = 5
-const HOME_ID_TIME = 8
-
-interface HomeImage {
-  key: string
-  load: () => Promise<Uint8Array>
+interface Slot {
+  id: number
+  name: string
 }
 
-interface HomeView {
-  head: string
-  titles: string[]
-  times: string[]
-  images: HomeImage[]
+/* Home: 5 textos + 3 imagens. */
+const H = {
+  head: { id: 1, name: 'hHead' },
+  card: { id: 2, name: 'hCard' },
+  meta: { id: 3, name: 'hMeta' },
+  next: { id: 4, name: 'hNext' },
+  foot: { id: 5, name: 'hFoot' },
+  brand: { id: 6, name: 'hBrand' },
+  veh: { id: 7, name: 'hVeh' },
+  keys: { id: 8, name: 'hKeys' },
 }
+/* Leitor e telas de texto compartilham corpo/rodapé. */
+const R = {
+  body: { id: 1, name: 'rBody' },
+  foot: { id: 2, name: 'rFoot' },
+  hint: { id: 3, name: 'rHint' },
+  date: { id: 4, name: 'rDate' },
+  veh: { id: 5, name: 'rVeh' },
+  ring: { id: 6, name: 'rRing' },
+}
+const T = {
+  body: { id: 1, name: 'tBody' },
+  foot: { id: 2, name: 'tFoot' },
+  head: { id: 3, name: 'tHead' },
+  brand: { id: 4, name: 'tBrand' },
+}
+const L = {
+  head: { id: 1, name: 'lHead' },
+  foot: { id: 2, name: 'lFoot' },
+  list: { id: 3, name: 'lList' },
+  brand: { id: 4, name: 'lBrand' },
+  keys: { id: 5, name: 'lKeys' },
+}
+const S = {
+  cap: { id: 1, name: 'sCap' },
+  img: { id: 2, name: 'sImg' },
+  title: { id: 3, name: 'sTitle' },
+  status: { id: 4, name: 'sStatus' },
+}
+
+/* Geometria da home (576×288). */
+const CARD = { x: 6, y: 30, w: 564, h: 136 }
+const CARD_TEXT_W = 536
+const CARD_LINES = 3
+const NEXT = { x: 16, y: 176, w: 548, h: 56 }
+const FOOT_Y = 258
 
 /** Corta por caracteres, preservando o ellipsis para o container de texto. */
 function trimTitle(text: string, max = 128): string {
   return text.length > max ? `${text.slice(0, max - 1).trimEnd()}…` : text
 }
 
-/** Ajusta a manchete a no máximo 2 linhas, cortando palavras do fim e fechando com "…". */
-function fitTitle(title: string, prefix: string): string {
+/** Ajusta a manchete a no máximo `lines` linhas, cortando palavras do fim e fechando com "…". */
+function fitLines(title: string, lines: number, width: number): string {
   const words = title.split(/\s+/).filter(Boolean)
-  const fits = (text: string) => measureTextWrap(`${prefix}${text}`, HOME_TITLE_W).lineCount <= 2
+  const fits = (text: string) => measureTextWrap(text, width).lineCount <= lines
   if (fits(words.join(' '))) return words.join(' ')
   while (words.length > 1) {
     words.pop()
@@ -109,16 +157,41 @@ function fitTitle(title: string, prefix: string): string {
   return `${single}…`
 }
 
-/** Alinha à direita no container de horário preenchendo com espaços. */
-function rightAlign(text: string): string {
-  const pad = Math.max(0, Math.floor((HOME_TIME_W - getTextWidth(text)) / getTextWidth(' ')))
+/** Alinha à direita preenchendo com espaços (a fonte do firmware só alinha à esquerda). */
+function rightAlign(text: string, width: number): string {
+  // Uma folga de 2 espaços: o firmware quebra a linha se o texto encosta na borda.
+  const pad = Math.max(0, Math.floor((width - getTextWidth(text)) / getTextWidth(' ')) - 2)
   return `${' '.repeat(pad)}${text}`
 }
 
-function bar(page: number, total: number, width = 8): string {
-  const filled = Math.max(1, Math.round(((page + 1) / Math.max(1, total)) * width))
-  return '━'.repeat(filled) + '─'.repeat(Math.max(0, width - filled))
+function centered(text: string, width: number): string {
+  const pad = Math.max(0, Math.floor((width - getTextWidth(text)) / 2 / getTextWidth(' ')))
+  return `${' '.repeat(pad)}${text}`
 }
+
+const blank = (text: string): string => (text.trim() ? text : ' ')
+
+function clockNow(): string {
+  const now = newsClock(new Date().toISOString())
+  return now ? `${now.clock} ${now.zone}` : clock(new Date().toISOString())
+}
+
+function stampOf(iso: string, withDay: boolean): string {
+  const when = newsClock(iso)
+  if (!when) return relativeTime(iso)
+  return withDay || when.day !== t('hoje') ? `${when.day} · ${when.clock}` : when.clock
+}
+
+interface HomeView {
+  head: string
+  card: string
+  meta: string
+  next: string
+  foot: string
+  vehicle: { key: string; load: () => Promise<Uint8Array> }
+}
+
+type Screen = GlassesMode
 
 export class GlassesUI {
   private bridge: EvenAppBridge | null = null
@@ -129,12 +202,13 @@ export class GlassesUI {
   private unsubscribeDevice: (() => void) | null = null
   private clockTimer: ReturnType<typeof setInterval> | null = null
 
-  private mode: GlassesMode = 'home'
+  private mode: GlassesMode = 'splash'
   private previousMode: GlassesMode = 'home'
   private homeIndex = 0
   // Sincronização single-flight da home: o que já foi enviado aos óculos.
   private sentText = new Map<number, string>()
-  private sentImage: Array<string | null> = [null, null, null]
+  private sentImage = new Map<string, string>()
+  private epoch = 0
   private syncWanted = false
   private syncRunning = false
   private rebuilding = 0
@@ -150,11 +224,27 @@ export class GlassesUI {
   private pendingRestore: GlassesSnapshot | null = null
   private notice = ''
   private noticeTimer: ReturnType<typeof setTimeout> | null = null
+  private busy = 0
+  private busyLabel = ''
+  private openToken = 0
+  private splashStart = 0
+  private splashTimers: Array<ReturnType<typeof setTimeout>> = []
+  private splashStatus = ''
+  // Cabeçalho das telas de lista/texto e o slot da imagem de marca.
+  private headTitle = ''
+  private headText: Slot | null = null
+  private headImage: Slot | null = null
+  private pageSlots: { body: Slot; foot: Slot } = { body: R.body, foot: R.foot }
 
   private deps: GlassesDeps
+  private animator: Animator<Screen>
 
   constructor(deps: GlassesDeps) {
     this.deps = deps
+    this.animator = new Animator<Screen>(
+      (target, frame) => this.sendFrame({ id: target.containerId, name: target.containerName }, frame),
+      (screen) => !this.destroyed && this.ready && this.mode === screen,
+    )
   }
 
   async init(): Promise<void> {
@@ -170,8 +260,9 @@ export class GlassesUI {
       this.sources = this.deps.getSources()
       this.saved = this.deps.getSaved()
       this.filter = this.deps.getFilter()
-      const view = this.homeView()
-      const created = await bridge.createStartUpPageContainer(new CreateStartUpPageContainer(this.homeLayout(view)))
+      this.mode = 'splash'
+      this.splashStatus = this.splashStatusText()
+      const created = await bridge.createStartUpPageContainer(new CreateStartUpPageContainer(this.splashLayout()))
       if (created !== 0) throw new Error(`startup ${created}`)
       this.ready = true
       this.attach()
@@ -180,8 +271,7 @@ export class GlassesUI {
       this.clockTimer = setInterval(() => {
         if (this.mode === 'home') this.syncHome()
       }, 60_000)
-      this.resetHomeCache(view)
-      this.syncHome()
+      this.startSplash()
     } catch (error) {
       this.deps.onStatus({ state: 'error', message: error instanceof Error ? error.message : t('falha ao iniciar') })
       this.ready = false
@@ -200,11 +290,13 @@ export class GlassesUI {
         return
       }
       if (sysType === OsEventTypeList.FOREGROUND_ENTER_EVENT) {
-        void this.deps.refresh().catch(() => undefined)
+        this.animator.resume()
+        void this.runBusy(t('ATUALIZANDO…'), () => this.deps.refresh()).catch(() => undefined)
         this.refreshCurrent()
         return
       }
       if (sysType === OsEventTypeList.FOREGROUND_EXIT_EVENT) {
+        this.animator.pause()
         this.saveSession()
         return
       }
@@ -262,7 +354,7 @@ export class GlassesUI {
       .join(',')}|${saved.map((entry) => entry.id).join(',')}`
     const changed = signature !== this.feedSignature || feed.length !== this.feed.length
     const filterChanged = filter !== this.filter
-    // Itens novos entram no topo: o cursor acompanha a notícia, não o índice.
+    // Itens novos entram no topo: o foco acompanha a notícia pelo id, não o índice.
     const selected = this.homeItemAt(this.homeIndex)
     const anchorId = this.current?.id ?? (selected && selected !== 'menu' ? selected.id : null)
     const previousIndex = this.homeIndex
@@ -287,6 +379,11 @@ export class GlassesUI {
         return
       }
     }
+    if (this.mode === 'splash') {
+      this.updateSplashStatus()
+      this.checkSplash()
+      return
+    }
     if (!changed && this.homeIndex === previousIndex) return
     if (this.mode === 'home') this.syncHome()
     else if (this.mode === 'saved') void this.renderSaved()
@@ -294,6 +391,10 @@ export class GlassesUI {
 
   async setLanguage(): Promise<void> {
     if (!this.ready) return
+    if (this.mode === 'splash') {
+      this.updateSplashStatus()
+      return
+    }
     if (this.mode === 'article' && this.current) {
       this.pages = this.paginateArticle(this.current)
       this.page = Math.min(this.page, this.pages.length - 1)
@@ -319,14 +420,164 @@ export class GlassesUI {
     await this.renderHome()
   }
 
+  /* ----------------------------------------------------------- ocupado/aviso */
+
+  /** Liga o spinner do cabeçalho e o aviso enquanto `task` roda. */
+  private async runBusy<T>(label: string, task: () => Promise<T>): Promise<T> {
+    this.beginBusy(label)
+    try {
+      return await task()
+    } finally {
+      this.endBusy()
+    }
+  }
+
+  private beginBusy(label: string): void {
+    this.busy += 1
+    this.busyLabel = label
+    this.notice = label
+    if (this.noticeTimer) clearTimeout(this.noticeTimer)
+    this.startSpinner()
+    this.refreshHeader()
+  }
+
+  private endBusy(repaint = true): void {
+    this.busy = Math.max(0, this.busy - 1)
+    if (this.busy > 0) return
+    if (this.notice === this.busyLabel) this.notice = ''
+    this.busyLabel = ''
+    this.animator.stop(repaint)
+    this.refreshHeader()
+  }
+
+  private startSpinner(): void {
+    const slot = this.headImage
+    if (!slot || this.busy === 0 || !this.ready) return
+    this.animator.start(
+      'spinner',
+      slot.id,
+      slot.name,
+      (elapsed) => {
+        const index = spinnerIndex(elapsed)
+        return { key: `spin:${index}`, data: spinnerFrame(index) }
+      },
+      SPINNER_INTERVAL_MS,
+      { screen: this.mode, restore: () => ({ key: 'brand', data: brandMark() }) },
+    )
+  }
+
+  /** Marca estática, ou o spinner se algo está carregando. */
+  private paintHead(): void {
+    const slot = this.headImage
+    if (!slot) return
+    if (this.busy > 0) this.startSpinner()
+    else void this.paintImage(slot, 'brand', async () => brandMark())
+  }
+
+  private refreshHeader(): void {
+    if (!this.ready) return
+    if (this.mode === 'home') this.syncHome()
+    else if (this.headText) void this.upgradeText(this.headText.id, this.headText.name, this.listHead())
+  }
+
+  private listHead(): string {
+    const text = this.notice ? `${this.headTitle}  ·  ${this.notice}` : `${APP}  ·  ${this.headTitle}`
+    return blank(pxTruncate(text, 528))
+  }
+
+  /* --------------------------------------------------------------- abertura */
+
+  private splashStatusText(): string {
+    return this.feed.length ? t('{n} matérias', { n: this.feed.length }) : t('carregando a edição…')
+  }
+
+  private splashLayout() {
+    const textObject = [
+      new TextContainerProperty({
+        xPosition: 0, yPosition: 0, width: W, height: 288, paddingLength: 0,
+        containerID: S.cap.id, containerName: S.cap.name, textColor: DIM,
+        content: ' ', isEventCapture: 1, zOrderIndex: 0,
+      }),
+      new TextContainerProperty({
+        xPosition: 0, yPosition: 154, width: W, height: 28, paddingLength: 0,
+        containerID: S.title.id, containerName: S.title.name, textColor: BRIGHT,
+        content: centered(APP, W), isEventCapture: 0, zOrderIndex: 2,
+      }),
+      new TextContainerProperty({
+        xPosition: 0, yPosition: 196, width: W, height: 28, paddingLength: 0,
+        containerID: S.status.id, containerName: S.status.name, textColor: DIM,
+        content: blank(centered(this.splashStatus, W)), isEventCapture: 0, zOrderIndex: 3,
+      }),
+    ]
+    const imageObject = [
+      new ImageContainerProperty({
+        xPosition: (W - SPLASH_W) / 2, yPosition: 44, width: SPLASH_W, height: SPLASH_H,
+        containerID: S.img.id, containerName: S.img.name, zOrderIndex: 1,
+      }),
+    ]
+    return { containerTotalNum: textObject.length + imageObject.length, textObject, imageObject }
+  }
+
+  private startSplash(): void {
+    this.splashStart = performance.now()
+    this.animator.start(
+      'splash',
+      S.img.id,
+      S.img.name,
+      (elapsed) => splashFrame(elapsed),
+      SPLASH_INTERVAL_MS,
+      { screen: 'splash' },
+    )
+    this.splashTimers = [
+      setTimeout(() => this.checkSplash(), SPLASH_MIN_MS + 20),
+      setTimeout(() => this.checkSplash(), SPLASH_MAX_MS + 20),
+    ]
+  }
+
+  private clearSplashTimers(): void {
+    for (const timer of this.splashTimers) clearTimeout(timer)
+    this.splashTimers = []
+  }
+
+  private updateSplashStatus(): void {
+    const next = this.splashStatusText()
+    if (next === this.splashStatus) return
+    this.splashStatus = next
+    void this.upgradeText(S.status.id, S.status.name, blank(centered(next, W)))
+  }
+
+  private checkSplash(): void {
+    if (this.mode !== 'splash' || !this.ready) return
+    if (splashDecision(performance.now() - this.splashStart, this.feed.length) === 'leave') {
+      this.clearSplashTimers()
+      void this.renderHome()
+    }
+  }
+
+  /* ------------------------------------------------------------- matérias */
+
   async showArticle(meta: ArticleMeta): Promise<void> {
-    const article = (await this.deps.loadArticle(meta)) ?? { ...meta, content: meta.summary }
+    const token = ++this.openToken
+    this.beginBusy(t('abrindo…'))
+    let article: ArticleFull | null = null
+    try {
+      // Mais de 8 s ou falha: abre com o resumo, como antes.
+      article = await Promise.race([
+        this.deps.loadArticle(meta),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), OPEN_TIMEOUT_MS)),
+      ])
+    } catch {
+      article = null
+    }
+    this.endBusy(false)
+    if (token !== this.openToken || this.destroyed) return
+    const opened = article ?? { ...meta, content: meta.summary }
     const at = this.feed.findIndex((item) => item.id === meta.id)
     if (at >= 0) this.homeIndex = at
-    this.current = article
+    this.current = opened
     this.mode = 'article'
     this.page = 0
-    this.pages = this.paginateArticle(article)
+    this.pages = this.paginateArticle(opened)
     await this.renderArticle()
   }
 
@@ -335,19 +586,14 @@ export class GlassesUI {
   }
 
   private paginateArticle(article: ArticleFull): string[] {
-    const source = this.sourceFor(article.sourceId)
-    const when = newsClock(article.publishedAt)
-    const stamp = when
-      ? `${when.day} · ${when.clock} ${when.zone}`
-      : relativeTime(article.publishedAt)
-    const meta = `${stamp} · ${t('{n} min de leitura', { n: article.readingMin })}`
     const body =
       (article.content || article.summary || '').trim() ||
       t('Esta matéria ainda não tem texto completo no Além dos Pontos. Abra a versão original no celular.')
     const note = article.full
       ? ''
       : `\n\n${t('(Resumo do Além dos Pontos. A íntegra está disponível no site da fonte.)')}`
-    const text = `▌ ${article.title}\n\n${(source?.name ?? article.sourceId).toUpperCase()}\n${meta}\n\n${body}${note}\n\n— ALÉM DOS PONTOS`
+    // O veículo já está no cabeçalho: o corpo começa na manchete.
+    const text = `${article.title}\n\n${t('{n} min de leitura', { n: article.readingMin })}\n\n${body}${note}\n\n– ${APP}`
     return paginate(text, { width: BODY_W, height: BODY_H })
   }
 
@@ -356,88 +602,105 @@ export class GlassesUI {
   }
 
   private homeItemAt(index: number): ArticleMeta | 'menu' | null {
-    if (index >= 0 && index < this.feed.length) return this.feed[index]
-    if (index === this.feed.length) return 'menu'
-    return null
+    const item = itemAt(index, this.feed.length)
+    if (item.kind === 'article') return this.feed[item.index]
+    return item.kind === 'menu' ? 'menu' : null
   }
 
+  /* -------------------------------------------------------------------- home */
+
   private homeHead(): string {
-    const menuText = t('Menu: atualizar, filtrar, salvos')
-    if (this.notice) return pxTruncate(this.notice, HOME_HEAD_W)
-    if (this.homeIndex < 0) return pxTruncate(`▶ ${menuText}`, HOME_HEAD_W)
-    const now = newsClock(new Date().toISOString())
+    if (this.notice) return pxTruncate(this.notice, 528)
+    if (!this.feed.length && !this.busy) return pxTruncate(t('◈  Sem notícias agora — toque para atualizar'), 528)
     const filtered = this.filter ? this.sourceFor(this.filter)?.name ?? this.filter : null
     const label = filtered ? filtered.toUpperCase() : t('TUDO')
-    const total = this.feed.length
-    const position = Math.min(this.homeIndex + 1, total)
-    const time = now ? `${now.clock} ${now.zone}` : clock(new Date().toISOString())
-    return pxTruncate(`◈ ALÉM DOS PONTOS  ${time}  ·  ${label} ${position}/${total}`, HOME_HEAD_W)
+    return pxTruncate(`${APP}  ·  ${label}  ·  ${clockNow()}`, 528)
+  }
+
+  private vehicleOf(article: ArticleMeta) {
+    const source = this.sourceFor(article.sourceId)
+    return {
+      key: sourceLineKey(source, article.sourceId),
+      load: () => sourceLineArt(source, article.sourceId, article.sourceId),
+    }
+  }
+
+  /** Manchete do card; quando ela ocupa menos de 3 linhas, a última traz idade e tempo de leitura. */
+  private cardBody(article: ArticleMeta): string {
+    const title = fitLines(article.title, CARD_LINES, CARD_TEXT_W)
+    const used = measureTextWrap(title, CARD_TEXT_W).lineCount
+    if (used >= CARD_LINES) return title
+    const detail = `${relativeTime(article.publishedAt)} · ${t('{n} min de leitura', { n: article.readingMin })}`
+    return `${title}${'\n'.repeat(CARD_LINES - used)}${detail}`
   }
 
   /** O que a home deve mostrar agora, calculado do estado atual. */
   private homeView(): HomeView {
-    const start = pageStartOf(this.homeIndex)
-    const today = t('hoje')
-    const view: HomeView = { head: this.homeHead(), titles: [], times: [], images: [] }
-    for (let slot = 0; slot < HOME_ROWS; slot += 1) {
-      const item = slotItem(start, slot, this.feed.length)
-      const selected = start + slot === this.homeIndex
-      const marker = selected ? '▶ ' : '  '
-      if (item.kind === 'menu') {
-        view.titles.push(`${marker}${t('Menu: atualizar, filtrar, salvos')}`)
-        view.times.push(' ')
-        view.images.push({ key: 'menu', load: menuLineArt })
-      } else if (item.kind === 'article') {
-        const article = this.feed[item.index]
-        const source = this.sourceFor(article.sourceId)
-        const when = newsClock(article.publishedAt)
-        const stamp = when ? (when.day === today ? when.clock : `${when.day} ${when.clock}`) : ''
-        view.titles.push(`${marker}${fitTitle(article.title, '▶ ')}`)
-        view.times.push(stamp ? rightAlign(stamp) : ' ')
-        view.images.push({
-          key: sourceLineKey(source, article.sourceId),
-          load: () => sourceLineArt(source, article.sourceId, article.sourceId),
-        })
-      } else {
-        view.titles.push(' ')
-        view.times.push(' ')
-        view.images.push({ key: 'blank', load: async () => blankSourceLine() })
+    const item = itemAt(this.homeIndex, this.feed.length)
+    const { position, total } = progressOf(this.homeIndex, this.feed.length)
+    const foot = `${progressBar(position, total)}  ${position}/${total}`
+    const next = nextItems(this.homeIndex, this.feed.length)
+      .map((entry) => {
+        if (entry.kind === 'menu') return t('Menu: atualizar, filtrar, salvos')
+        if (entry.kind === 'empty') return ''
+        const article = this.feed[entry.index]
+        const short = this.sourceFor(article.sourceId)?.short ?? article.sourceId
+        return pxTruncate(`${short} · ${article.title}`, NEXT.w)
+      })
+      .filter(Boolean)
+      .join('\n')
+    if (item.kind === 'article') {
+      const article = this.feed[item.index]
+      const category = CATEGORY_META[article.category]?.name ?? article.category
+      const meta = `${t(category).toUpperCase()} · ${stampOf(article.publishedAt, false)}`
+      return {
+        head: this.homeHead(),
+        card: ` \n${this.cardBody(article)}`,
+        meta: rightAlign(meta, 260),
+        next: blank(next),
+        foot,
+        vehicle: this.vehicleOf(article),
       }
     }
-    return view
+    const menuLabel = t('MENU')
+    const body = this.feed.length
+      ? `${t('atualizar · filtrar · salvos · idioma · ajuda')}\n\n${t('toque para abrir')}`
+      : t('◈  Sem notícias agora — toque para atualizar')
+    return {
+      head: this.homeHead(),
+      card: ` \n${body}`,
+      meta: ' ',
+      next: blank(next),
+      foot,
+      vehicle: { key: `menu:${menuLabel}`, load: () => menuLineArt(menuLabel) },
+    }
   }
 
   private homeLayout(view: HomeView) {
-    const textObject = [
+    const text = (slot: Slot, x: number, y: number, w: number, h: number, content: string, color: number, z: number, capture = 0, extra: Partial<TextContainerProperty> = {}) =>
       new TextContainerProperty({
-        xPosition: 6, yPosition: 0, width: HOME_HEAD_W, height: 28,
-        paddingLength: 0, containerID: HOME_ID_HEAD, containerName: 'homeHead',
-        textColor: BRIGHT, content: view.head, isEventCapture: 1,
+        xPosition: x, yPosition: y, width: w, height: h, paddingLength: 0,
+        containerID: slot.id, containerName: slot.name, textColor: color,
+        content, isEventCapture: capture, zOrderIndex: z, ...extra,
+      })
+    const textObject = [
+      text(H.head, 38, 0, 532, 28, view.head, BRIGHT, 0, 1),
+      text(H.card, CARD.x, CARD.y, CARD.w, CARD.h, view.card, BRIGHT, 1, 0, {
+        borderWidth: 2, borderColor: 13, borderRadius: 10, paddingLength: 8,
       }),
-      ...HOME_ROW_TOP.map(
-        (top, slot) =>
-          new TextContainerProperty({
-            xPosition: 6, yPosition: top + 30, width: HOME_TITLE_W, height: HOME_TITLE_H,
-            paddingLength: 0, containerID: HOME_ID_TITLE + slot, containerName: `title${slot}`,
-            textColor: BRIGHT, content: view.titles[slot], isEventCapture: 0,
-          }),
-      ),
-      ...HOME_ROW_TOP.map(
-        (top, slot) =>
-          new TextContainerProperty({
-            xPosition: HOME_TIME_X, yPosition: top + 1, width: HOME_TIME_W, height: 28,
-            paddingLength: 0, containerID: HOME_ID_TIME + slot, containerName: `time${slot}`,
-            textColor: DIM, content: view.times[slot], isEventCapture: 0,
-          }),
-      ),
+      text(H.meta, 300, CARD.y + 10, 260, 28, view.meta, DIM, 3),
+      text(H.next, NEXT.x, NEXT.y, NEXT.w, NEXT.h, view.next, DIM, 4),
+      text(H.foot, 16, FOOT_Y - 1, 262, 28, view.foot, DIM, 5),
     ]
-    const imageObject = HOME_ROW_TOP.map(
-      (top, slot) =>
-        new ImageContainerProperty({
-          xPosition: 6, yPosition: top + 2, width: SOURCE_LINE_WIDTH, height: SOURCE_LINE_HEIGHT,
-          containerID: HOME_ID_LOGO + slot, containerName: `logo${slot}`,
-        }),
-    )
+    const image = (slot: Slot, x: number, y: number, w: number, h: number, z: number) =>
+      new ImageContainerProperty({
+        xPosition: x, yPosition: y, width: w, height: h, containerID: slot.id, containerName: slot.name, zOrderIndex: z,
+      })
+    const imageObject = [
+      image(H.veh, 16, CARD.y + 11, VEHICLE_W, VEHICLE_H, 2),
+      image(H.brand, 8, 2, BRAND_SIZE, BRAND_SIZE, 6),
+      image(H.keys, 282, FOOT_Y - 1, KEYS_W, KEYS_H, 7),
+    ]
     return { containerTotalNum: textObject.length + imageObject.length, textObject, imageObject }
   }
 
@@ -445,14 +708,15 @@ export class GlassesUI {
     this.homeIndex = 0
   }
 
-  /** Depois de um rebuild/startup: textos = layout, nenhuma imagem pintada. */
+  /** Depois de um rebuild: textos = layout, nenhuma imagem pintada. */
   private resetHomeCache(view: HomeView): void {
-    this.sentText = new Map<number, string>([[HOME_ID_HEAD, view.head]])
-    for (let slot = 0; slot < HOME_ROWS; slot += 1) {
-      this.sentText.set(HOME_ID_TITLE + slot, view.titles[slot])
-      this.sentText.set(HOME_ID_TIME + slot, view.times[slot])
-    }
-    this.sentImage = [null, null, null]
+    this.sentText = new Map<number, string>([
+      [H.head.id, view.head],
+      [H.card.id, view.card],
+      [H.meta.id, view.meta],
+      [H.next.id, view.next],
+      [H.foot.id, view.foot],
+    ])
   }
 
   /** Pede a sincronização da home; um único laço envia só o que mudou. */
@@ -483,41 +747,29 @@ export class GlassesUI {
         this.syncWanted = false
         if (this.syncStale() || !this.bridge) continue
         const view = this.homeView()
-        const texts: Array<[number, string, string]> = [[HOME_ID_HEAD, 'homeHead', view.head]]
-        for (let slot = 0; slot < HOME_ROWS; slot += 1) {
-          texts.push([HOME_ID_TITLE + slot, `title${slot}`, view.titles[slot]])
-          texts.push([HOME_ID_TIME + slot, `time${slot}`, view.times[slot]])
-        }
-        // Cabeçalho, depois título e horário de cada slot, depois as imagens.
-        const ordered = [texts[0], ...texts.slice(1).filter(([id]) => id < HOME_ID_TIME), ...texts.slice(1).filter(([id]) => id >= HOME_ID_TIME)]
+        // Por gesto: card primeiro, depois meta, "a seguir", rodapé e cabeçalho; por fim a imagem.
+        const ordered: Array<[Slot, string]> = [
+          [H.card, view.card],
+          [H.meta, view.meta],
+          [H.next, view.next],
+          [H.foot, view.foot],
+          [H.head, view.head],
+        ]
         let interrupted = false
-        for (const [id, name, content] of ordered) {
-          if (this.sentText.get(id) === content) continue
-          this.sentText.set(id, content)
-          await this.sendText(id, name, content)
+        for (const [slot, content] of ordered) {
+          if (this.sentText.get(slot.id) === content) continue
+          this.sentText.set(slot.id, content)
+          await this.sendText(slot.id, slot.name, content)
           if (this.syncStale()) {
             interrupted = true
             break
           }
         }
         if (interrupted) continue
-        for (let slot = 0; slot < HOME_ROWS; slot += 1) {
-          const image = view.images[slot]
-          if (this.sentImage[slot] === image.key) continue
-          const data = await image.load()
-          if (this.syncStale()) break
-          this.sentImage[slot] = image.key
-          const result = await this.run(() =>
-            this.bridge!.updateImageRawData(
-              new ImageRawDataUpdate({
-                containerID: HOME_ID_LOGO + slot,
-                containerName: `logo${slot}`,
-                imageData: Array.from(data),
-              }),
-            ),
-          )
-          if (!result || !ImageRawDataUpdateResult.isSuccess(result)) this.sentImage[slot] = null
-          if (this.syncStale()) break
+        if (this.sentImage.get(H.veh.name) !== view.vehicle.key) {
+          const data = await view.vehicle.load()
+          if (this.syncStale()) continue
+          await this.paintImage(H.veh, view.vehicle.key, async () => data)
         }
       }
     } finally {
@@ -531,7 +783,7 @@ export class GlassesUI {
     if (next === this.homeIndex) return
     this.homeIndex = next
     this.syncHome()
-    this.deps.onSession(this.getSnapshot())
+    this.emitSession()
   }
 
   private activateHome(): void {
@@ -540,6 +792,8 @@ export class GlassesUI {
     if (item === null || item === 'menu') void this.showActions('home')
     else void this.showArticle(item)
   }
+
+  /* ------------------------------------------------------------ bridge/fila */
 
   private async run<T>(task: () => Promise<T>): Promise<T | null> {
     const next = this.queue.then(task, task)
@@ -551,67 +805,168 @@ export class GlassesUI {
     }
   }
 
+  /** Imagem pelo bridge, sempre pela fila; erro limpa o cache do slot e segue. */
+  private async sendFrame(slot: Slot, frame: AnimFrame): Promise<boolean> {
+    if (!this.bridge || this.destroyed) return false
+    const epoch = this.epoch
+    const result = await this.run(() =>
+      this.bridge!.updateImageRawData(
+        new ImageRawDataUpdate({ containerID: slot.id, containerName: slot.name, imageData: Array.from(frame.data) }),
+      ),
+    )
+    const ok = !!result && ImageRawDataUpdateResult.isSuccess(result)
+    if (epoch === this.epoch) {
+      if (ok) this.sentImage.set(slot.name, frame.key)
+      else this.sentImage.delete(slot.name)
+    }
+    return ok
+  }
+
+  /** Pinta uma imagem uma vez por key (pula se já está lá). */
+  private async paintImage(slot: Slot, key: string, load: () => Promise<Uint8Array>): Promise<void> {
+    if (this.sentImage.get(slot.name) === key) return
+    const epoch = this.epoch
+    try {
+      const data = await load()
+      if (epoch !== this.epoch || this.destroyed || this.sentImage.get(slot.name) === key) return
+      await this.sendFrame(slot, { key, data })
+    } catch {
+      if (epoch === this.epoch) this.sentImage.delete(slot.name)
+    }
+  }
+
+  private emitSession(): void {
+    if (this.mode === 'splash') return
+    this.deps.onSession(this.getSnapshot())
+  }
+
+  /** Troca a página inteira. As imagens voltam em branco: zera o cache e quem chamou repinta. */
   private async rebuild(payload: RebuildPageContainer): Promise<void> {
     if (!this.bridge || !this.ready) return
-    await this.run(() => this.bridge!.rebuildPageContainer(payload))
-    this.deps.onSession(this.getSnapshot())
+    this.animator.stop(false)
+    this.clearSplashTimers()
+    this.epoch += 1
+    this.sentImage.clear()
+    this.rebuilding += 1
+    try {
+      await this.run(() => this.bridge!.rebuildPageContainer(payload))
+    } finally {
+      this.rebuilding -= 1
+    }
+    this.emitSession()
   }
 
   private async upgradeText(id: number, name: string, content: string): Promise<void> {
     if (!this.bridge || !this.ready) return
     await this.run(() =>
       this.bridge!.textContainerUpgrade(
-        new TextContainerUpgrade({ containerID: id, containerName: name, content, contentOffset: 0, contentLength: 0 }),
+        new TextContainerUpgrade({ containerID: id, containerName: name, content: blank(content), contentOffset: 0, contentLength: 0 }),
       ),
     )
   }
 
+  private keys(kind: 'home' | 'list' | 'open' | 'back'): KeycapItem[] {
+    const scroll: KeycapItem = { glyph: 'updown', label: t(kind === 'home' ? 'navegar' : 'rolar') }
+    const pick: KeycapItem = { glyph: 'dot', label: t(kind === 'home' || kind === 'open' ? 'abrir' : 'escolher') }
+    const out: KeycapItem = { glyph: 'dots', label: t(kind === 'home' ? 'sair' : 'voltar') }
+    return [scroll, pick, out]
+  }
+
+  private paintKeys(slot: Slot, kind: 'home' | 'list' | 'open'): void {
+    const items = this.keys(kind)
+    const lang = currentLanguage()
+    void this.paintImage(slot, `keys:${lang}:${kind}`, () => keycapsArt(items, lang))
+  }
+
+  /* -------------------------------------------------------------- renderers */
+
   private async renderHome(): Promise<void> {
     this.mode = 'home'
     this.current = null
+    this.headImage = H.brand
+    this.headText = null
     if (!this.ready) return
     this.homeIndex = clampHomeIndex(this.homeIndex, this.feed.length)
     const view = this.homeView()
-    this.rebuilding += 1
-    try {
-      await this.rebuild(new RebuildPageContainer(this.homeLayout(view)))
-    } finally {
-      this.rebuilding -= 1
-    }
+    await this.rebuild(new RebuildPageContainer(this.homeLayout(view)))
     if (this.mode !== 'home') return
     this.resetHomeCache(view)
     this.syncHome()
+    this.paintHead()
+    this.paintKeys(H.keys, 'home')
+  }
+
+  private readerHead(article: ArticleFull): string {
+    const when = newsClock(article.publishedAt)
+    const stamp = when ? `${when.day} · ${when.clock} ${when.zone}` : relativeTime(article.publishedAt)
+    return blank(rightAlign(stamp, 262))
+  }
+
+  private readerFoot(): string {
+    if (this.mode === 'help') return `${this.page + 1}/${this.pages.length}  ${progressBar(this.page + 1, this.pages.length)}  ${t('toque: voltar')}`
+    const last = this.page >= this.pages.length - 1
+    const tail = last
+      ? t('fim da matéria')
+      : t('{n} min restantes', { n: remainingMinutes(this.current?.readingMin ?? 1, this.page, this.pages.length) })
+    return `${this.page + 1}/${this.pages.length}  ·  ${tail}`
+  }
+
+  private ringKey(): { key: string; fraction: number } {
+    const fraction = this.pages.length ? (this.page + 1) / this.pages.length : 1
+    return { key: `ring:${ringStep(fraction)}`, fraction }
   }
 
   private async renderArticle(): Promise<void> {
     if (!this.ready || !this.current) return
     this.mode = 'article'
-    const content = this.pages[this.page] ?? ''
-    await this.rebuild(
-      new RebuildPageContainer({
-        containerTotalNum: 2,
-        textObject: [
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 0, width: W, height: 240,
-            paddingLength: 8, containerID: 1, containerName: 'body',
-            textColor: BRIGHT, content, isEventCapture: 1,
-          }),
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 242, width: W, height: 46,
-            paddingLength: 6, containerID: 2, containerName: 'pager',
-            textColor: DIM, content: this.pagerLine(), isEventCapture: 0,
-          }),
-        ],
+    this.headImage = null
+    this.headText = null
+    this.pageSlots = { body: R.body, foot: R.foot }
+    const article = this.current
+    const textObject = [
+      new TextContainerProperty({
+        xPosition: 0, yPosition: 28, width: W, height: 232, paddingLength: 8,
+        containerID: R.body.id, containerName: R.body.name, textColor: BRIGHT,
+        content: blank(this.pages[this.page] ?? ''), isEventCapture: 1,
       }),
+      new TextContainerProperty({
+        xPosition: 40, yPosition: 260, width: 380, height: 28, paddingLength: 0,
+        containerID: R.foot.id, containerName: R.foot.name, textColor: DIM,
+        content: blank(this.readerFoot()), isEventCapture: 0,
+      }),
+      new TextContainerProperty({
+        xPosition: 420, yPosition: 260, width: 150, height: 28, paddingLength: 0,
+        containerID: R.hint.id, containerName: R.hint.name, textColor: DIM,
+        content: rightAlign(`2× ${t('menu')}`, 150), isEventCapture: 0,
+      }),
+      new TextContainerProperty({
+        xPosition: 300, yPosition: 0, width: 270, height: 28, paddingLength: 0,
+        containerID: R.date.id, containerName: R.date.name, textColor: DIM,
+        content: this.readerHead(article), isEventCapture: 0,
+      }),
+    ]
+    const imageObject = [
+      new ImageContainerProperty({
+        xPosition: 6, yPosition: 2, width: VEHICLE_W, height: VEHICLE_H,
+        containerID: R.veh.id, containerName: R.veh.name,
+      }),
+      new ImageContainerProperty({
+        xPosition: 8, yPosition: 262, width: BRAND_SIZE, height: BRAND_SIZE,
+        containerID: R.ring.id, containerName: R.ring.name,
+      }),
+    ]
+    await this.rebuild(
+      new RebuildPageContainer({ containerTotalNum: textObject.length + imageObject.length, textObject, imageObject }),
     )
-  }
-
-  private pagerLine(): string {
-    return this.footerLine()
+    if (this.mode !== 'article') return
+    const source = this.sourceFor(article.sourceId)
+    void this.paintImage(R.veh, sourceLineKey(source, article.sourceId), () => sourceLineArt(source, article.sourceId, article.sourceId))
+    const ring = this.ringKey()
+    void this.paintImage(R.ring, ring.key, async () => progressRing(ring.fraction))
   }
 
   private async renderPager(): Promise<void> {
-    await this.upgradeText(2, 'pager', this.footerLine())
+    await this.upgradeText(this.pageSlots.foot.id, this.pageSlots.foot.name, this.readerFoot())
   }
 
   private changePage(delta: number) {
@@ -619,18 +974,105 @@ export class GlassesUI {
     const next = Math.min(this.pages.length - 1, Math.max(0, this.page + delta))
     if (next === this.page) return
     this.page = next
-    void this.upgradeText(1, 'body', this.pages[this.page] ?? '')
-    void this.upgradeText(2, 'pager', this.footerLine())
-    this.deps.onSession(this.getSnapshot())
+    const { body, foot } = this.pageSlots
+    void this.upgradeText(body.id, body.name, this.pages[this.page] ?? '')
+    void this.upgradeText(foot.id, foot.name, this.readerFoot())
+    if (this.mode === 'article') {
+      const ring = this.ringKey()
+      void this.paintImage(R.ring, ring.key, async () => progressRing(ring.fraction))
+    }
+    this.emitSession()
   }
 
-  private footerLine(): string {
-    const tail = `● ${t(this.mode === 'help' ? 'voltar' : 'ações')}`
-    return `${this.page + 1}/${this.pages.length}  ${bar(this.page, this.pages.length)}  ${tail}`
+  /** Tela de texto paginado (ajuda, salvos vazio): cabeçalho com a marca, corpo, rodapé. */
+  private async renderTextScreen(title: string, footer: () => string): Promise<void> {
+    this.headImage = T.brand
+    this.headText = T.head
+    this.headTitle = title
+    this.pageSlots = { body: T.body, foot: T.foot }
+    const textObject = [
+      new TextContainerProperty({
+        xPosition: 0, yPosition: 28, width: W, height: 232, paddingLength: 8,
+        containerID: T.body.id, containerName: T.body.name, textColor: BRIGHT,
+        content: blank(this.pages[this.page] ?? ''), isEventCapture: 1,
+      }),
+      new TextContainerProperty({
+        xPosition: 16, yPosition: 260, width: 554, height: 28, paddingLength: 0,
+        containerID: T.foot.id, containerName: T.foot.name, textColor: DIM,
+        content: blank(footer()), isEventCapture: 0,
+      }),
+      new TextContainerProperty({
+        xPosition: 38, yPosition: 0, width: 532, height: 28, paddingLength: 0,
+        containerID: T.head.id, containerName: T.head.name, textColor: DIM,
+        content: this.listHead(), isEventCapture: 0,
+      }),
+    ]
+    const imageObject = [
+      new ImageContainerProperty({
+        xPosition: 8, yPosition: 2, width: BRAND_SIZE, height: BRAND_SIZE,
+        containerID: T.brand.id, containerName: T.brand.name,
+      }),
+    ]
+    await this.rebuild(
+      new RebuildPageContainer({ containerTotalNum: textObject.length + imageObject.length, textObject, imageObject }),
+    )
+    this.paintHead()
+  }
+
+  /** Tela de lista nativa dentro de uma moldura (borda arredondada), com cabeçalho e teclas. */
+  private async renderListScreen(title: string, subtitle: string, items: string[], kind: 'list' | 'open'): Promise<void> {
+    this.headImage = L.brand
+    this.headText = L.head
+    this.headTitle = title
+    const textObject = [
+      new TextContainerProperty({
+        xPosition: 38, yPosition: 0, width: 532, height: 28, paddingLength: 0,
+        containerID: L.head.id, containerName: L.head.name, textColor: DIM,
+        content: this.listHead(), isEventCapture: 0,
+      }),
+      new TextContainerProperty({
+        xPosition: 16, yPosition: FOOT_Y - 1, width: 262, height: 28, paddingLength: 0,
+        containerID: L.foot.id, containerName: L.foot.name, textColor: DIM,
+        content: blank(pxTruncate(subtitle, 258)), isEventCapture: 0,
+      }),
+    ]
+    const listObject = [
+      new ListContainerProperty({
+        xPosition: 6, yPosition: 32, width: 564, height: 218,
+        borderWidth: 2, borderColor: 13, borderRadius: 10, paddingLength: 6,
+        containerID: L.list.id, containerName: L.list.name, isEventCapture: 1,
+        itemContainer: new ListItemContainerProperty({
+          itemCount: items.length,
+          itemWidth: 540,
+          isItemSelectBorderEn: 1,
+          itemName: items,
+        }),
+      }),
+    ]
+    const imageObject = [
+      new ImageContainerProperty({
+        xPosition: 8, yPosition: 2, width: BRAND_SIZE, height: BRAND_SIZE,
+        containerID: L.brand.id, containerName: L.brand.name,
+      }),
+      new ImageContainerProperty({
+        xPosition: 282, yPosition: FOOT_Y - 1, width: KEYS_W, height: KEYS_H,
+        containerID: L.keys.id, containerName: L.keys.name,
+      }),
+    ]
+    await this.rebuild(
+      new RebuildPageContainer({
+        containerTotalNum: textObject.length + listObject.length + imageObject.length,
+        textObject,
+        listObject,
+        imageObject,
+      }),
+    )
+    this.paintHead()
+    this.paintKeys(L.keys, kind)
   }
 
   private onTap() {
-    if (!this.ready) return
+    if (!this.ready || this.mode === 'splash') return
     if (this.mode === 'home') this.activateHome()
     else if (this.mode === 'article') void this.showActions('article')
     else if (this.mode === 'help') void this.renderHome()
@@ -639,6 +1081,11 @@ export class GlassesUI {
 
   private onDouble() {
     if (!this.ready) return
+    // Abertura: igual à raiz (diálogo de saída do sistema).
+    if (this.mode === 'splash') {
+      void this.exit()
+      return
+    }
     const action = doubleTapAction(this.mode)
     // Raiz: diálogo de saída do sistema. Não limpar nada aqui — se o usuário
     // cancelar, o app segue ativo; a limpeza fica no SYSTEM_EXIT_EVENT.
@@ -715,50 +1162,16 @@ export class GlassesUI {
     const subtitle =
       from === 'article' && this.current
         ? trimTitle(this.current.title, 48)
-        : t('{n} matérias · atualize ou filtre', { n: this.feed.length })
+        : t('{n} matérias', { n: this.feed.length })
 
-    await this.rebuild(
-      new RebuildPageContainer({
-        containerTotalNum: 4,
-        textObject: [
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 0, width: W, height: 35,
-            paddingLength: 4, containerID: 1, containerName: 'title',
-            textColor: BRIGHT, content: t('MENU'), isEventCapture: 0,
-          }),
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 35, width: W, height: 35,
-            paddingLength: 4, containerID: 2, containerName: 'subtitle',
-            textColor: DIM, content: subtitle, isEventCapture: 0,
-          }),
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 252, width: W, height: 36,
-            paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: t('▲▼ rolar  ·  ● escolher  ·  2× lista'), isEventCapture: 0,
-          }),
-        ],
-        listObject: [
-          new ListContainerProperty({
-            xPosition: 0, yPosition: 72, width: W, height: 178,
-            paddingLength: 2, containerID: 3, containerName: 'menu',
-            isEventCapture: 1,
-            itemContainer: new ListItemContainerProperty({
-              itemCount: items.length,
-              itemWidth: 560,
-              isItemSelectBorderEn: 1,
-              itemName: items,
-            }),
-          }),
-        ],
-      }),
-    )
+    await this.renderListScreen(t('MENU'), subtitle, items, 'list')
   }
 
   private async tryFullText(): Promise<void> {
     if (!this.current) return
-    await this.upgradeText(2, 'subtitle', t('Buscando texto completo…'))
-    const full = await this.deps.loadArticle(this.current, true)
-    const previousLength = this.current.content?.length ?? 0
+    const current = this.current
+    const full = await this.runBusy(t('Buscando texto completo…'), () => this.deps.loadArticle(current, true))
+    const previousLength = current.content?.length ?? 0
     if (full?.content && (full.full || full.content.length > previousLength + 150)) {
       this.current = full
       this.pages = this.paginateArticle(full)
@@ -766,7 +1179,9 @@ export class GlassesUI {
       await this.renderArticle()
       return
     }
-    await this.upgradeText(2, 'subtitle', t('Ainda só temos o resumo — abra no celular'))
+    this.notice = t('Ainda só temos o resumo — abra no celular')
+    this.refreshHeader()
+    this.scheduleNoticeClear()
   }
 
   private async toggleCurrentSave(): Promise<void> {
@@ -780,14 +1195,15 @@ export class GlassesUI {
 
   private async manualRefresh(): Promise<void> {
     const wasArticle = this.previousMode === 'article' && this.current
-    this.notice = t('↻ ATUALIZANDO…')
-    if (this.mode === 'home') this.syncHome()
+    let failed = false
+    this.beginBusy(t('ATUALIZANDO…'))
     try {
       await this.deps.refresh()
-      this.notice = t('OK · ATUALIZADO AGORA')
     } catch {
-      this.notice = t('! SEM CONEXÃO — TENTE DE NOVO')
+      failed = true
     }
+    this.endBusy(false)
+    this.notice = t(failed ? '! SEM CONEXÃO — TENTE DE NOVO' : 'OK · ATUALIZADO AGORA')
     this.feed = this.deps.getFeed()
     this.saved = this.deps.getSaved()
     if (wasArticle && this.current) {
@@ -802,8 +1218,8 @@ export class GlassesUI {
   private scheduleNoticeClear() {
     if (this.noticeTimer) clearTimeout(this.noticeTimer)
     this.noticeTimer = setTimeout(() => {
-      this.notice = ''
-      if (this.mode === 'home') this.syncHome()
+      if (this.busy === 0) this.notice = ''
+      this.refreshHeader()
     }, 4500)
   }
 
@@ -812,41 +1228,10 @@ export class GlassesUI {
     this.mode = 'sources'
     const list = this.topSources()
     const items = [t('●  Todas as fontes'), ...list.map((source) => `${this.filter === source.id ? '●' : '○'}  ${source.name} · ${source.count}`)]
-    await this.rebuild(
-      new RebuildPageContainer({
-        containerTotalNum: 4,
-        textObject: [
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 0, width: W, height: 35,
-            paddingLength: 4, containerID: 1, containerName: 'title',
-            textColor: BRIGHT, content: t('FONTES'), isEventCapture: 0,
-          }),
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 35, width: W, height: 35,
-            paddingLength: 4, containerID: 2, containerName: 'subtitle',
-            textColor: DIM, content: this.filter ? t('filtrando: {source}', { source: this.sourceFor(this.filter)?.name ?? this.filter }) : t('mostrando todas as fontes'), isEventCapture: 0,
-          }),
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 252, width: W, height: 36,
-            paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: t('▲▼ rolar  ·  ● filtrar  ·  2× voltar'), isEventCapture: 0,
-          }),
-        ],
-        listObject: [
-          new ListContainerProperty({
-            xPosition: 0, yPosition: 70, width: W, height: 160,
-            paddingLength: 2, containerID: 3, containerName: 'menu',
-            isEventCapture: 1,
-            itemContainer: new ListItemContainerProperty({
-              itemCount: items.length,
-              itemWidth: 560,
-              isItemSelectBorderEn: 1,
-              itemName: items,
-            }),
-          }),
-        ],
-      }),
-    )
+    const subtitle = this.filter
+      ? t('filtrando: {source}', { source: this.sourceFor(this.filter)?.name ?? this.filter })
+      : t('mostrando todas as fontes')
+    await this.renderListScreen(t('FONTES'), subtitle, items, 'list')
   }
 
   private async renderSaved(): Promise<void> {
@@ -866,80 +1251,31 @@ export class GlassesUI {
         { width: BODY_W, height: BODY_H },
       )
       this.page = 0
-      await this.rebuild(
-        new RebuildPageContainer({
-          containerTotalNum: 2,
-          textObject: [
-            new TextContainerProperty({
-              xPosition: 0, yPosition: 0, width: W, height: 240,
-              paddingLength: 8, containerID: 1, containerName: 'body',
-              textColor: BRIGHT, content: this.pages[0], isEventCapture: 1,
-            }),
-            new TextContainerProperty({
-              xPosition: 0, yPosition: 242, width: W, height: 46,
-              paddingLength: 6, containerID: 2, containerName: 'pager',
-              textColor: DIM, content: t('★ salvos  ·  ● voltar'), isEventCapture: 0,
-            }),
-          ],
-        }),
-      )
+      await this.renderTextScreen(t('SALVOS'), () => `★ ${t('salvos')}  ·  ${t('toque: voltar')}`)
       return
     }
     const items = this.saved.slice(0, 20).map((entry) => {
       const source = this.sourceFor(entry.sourceId)
       return trimTitle(`${source?.short ?? entry.sourceId} · ${entry.title}`, 60)
     })
-    await this.rebuild(
-      new RebuildPageContainer({
-        containerTotalNum: 4,
-        textObject: [
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 0, width: W, height: 35,
-            paddingLength: 4, containerID: 1, containerName: 'title',
-            textColor: BRIGHT, content: t('★ SALVOS · {n}', { n: this.saved.length }), isEventCapture: 0,
-          }),
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 35, width: W, height: 35,
-            paddingLength: 4, containerID: 2, containerName: 'subtitle',
-            textColor: DIM, content: t('guardados no seu celular'), isEventCapture: 0,
-          }),
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 252, width: W, height: 36,
-            paddingLength: 4, containerID: 4, containerName: 'hint',
-            textColor: DIM, content: t('▲▼ rolar  ·  ● abrir  ·  2× voltar'), isEventCapture: 0,
-          }),
-        ],
-        listObject: [
-          new ListContainerProperty({
-            xPosition: 0, yPosition: 70, width: W, height: 160,
-            paddingLength: 2, containerID: 3, containerName: 'menu',
-            isEventCapture: 1,
-            itemContainer: new ListItemContainerProperty({
-              itemCount: items.length,
-              itemWidth: 560,
-              isItemSelectBorderEn: 1,
-              itemName: items,
-            }),
-          }),
-        ],
-      }),
-    )
+    await this.renderListScreen(t('★ SALVOS · {n}', { n: this.saved.length }), t('guardados no seu celular'), items, 'open')
   }
 
   private async renderHelp(): Promise<void> {
     if (!this.ready) return
     this.mode = 'help'
     const help = [
-      t('◈ ALÉM DOS PONTOS — COMO USAR'),
-      '',
       t('▲ ▼  navegar e virar página'),
       t('●    abrir a matéria'),
-      t('●●   2 toques na lista: sair'),
-      t('2× em matéria abre o menu'),
-      t('Menu: ▲ acima da 1ª notícia'),
-      t('▲ ▼  percorre todas as notícias'),
+      t('2×   na lista: sair do app'),
+      t('2×   na matéria: abrir o menu'),
+      t('▲ acima da 1ª notícia: Menu'),
       '',
-      '─'.repeat(34),
+      '─'.repeat(30),
+      '',
+      t('A notícia em foco fica sempre no'),
+      t('mesmo card; as demais passam por'),
+      t('ele. Abaixo, “A seguir”.'),
       '',
       t('No menu: atualizar, filtrar'),
       t('por fonte, salvar, ajuda e sair.'),
@@ -950,23 +1286,7 @@ export class GlassesUI {
     ].join('\n')
     this.pages = paginate(help, { width: BODY_W, height: BODY_H })
     this.page = 0
-    await this.rebuild(
-      new RebuildPageContainer({
-        containerTotalNum: 2,
-        textObject: [
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 0, width: W, height: 240,
-            paddingLength: 8, containerID: 1, containerName: 'body',
-            textColor: BRIGHT, content: this.pages[0], isEventCapture: 1,
-          }),
-          new TextContainerProperty({
-            xPosition: 0, yPosition: 242, width: W, height: 46,
-            paddingLength: 6, containerID: 2, containerName: 'pager',
-            textColor: DIM, content: `${this.page + 1}/${this.pages.length}  ${bar(this.page, this.pages.length)}  ● ${t('voltar')}`, isEventCapture: 0,
-          }),
-        ],
-      }),
-    )
+    await this.renderTextScreen(t('COMO USAR'), () => this.readerFoot())
   }
 
   private refreshCurrent() {
@@ -985,12 +1305,12 @@ export class GlassesUI {
   }
 
   saveSession() {
-    this.deps.onSession(this.getSnapshot())
+    this.emitSession()
   }
 
   getSnapshot(): GlassesSnapshot {
     return {
-      mode: this.mode,
+      mode: this.mode === 'splash' ? 'home' : this.mode,
       articleId: this.current?.id ?? null,
       page: this.page,
       filter: this.filter,
@@ -1026,10 +1346,12 @@ export class GlassesUI {
   destroy() {
     this.destroyed = true
     this.ready = false
+    this.animator.stop(false)
     this.unsubscribe?.()
     this.unsubscribeDevice?.()
     if (this.clockTimer) clearInterval(this.clockTimer)
     if (this.noticeTimer) clearTimeout(this.noticeTimer)
+    this.clearSplashTimers()
     this.unsubscribe = null
     this.unsubscribeDevice = null
   }

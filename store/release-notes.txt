@@ -1,3 +1,13 @@
+1.1.0 — HUD redesenhado
+
+• Abertura animada: três pontos acendem e um farol emite ondas para além deles.
+• A manchete é a protagonista: card em destaque com borda, e o veículo em peso normal,
+  mais discreto, numa linha com o selo em contorno.
+• O foco fica sempre no mesmo lugar: as notícias passam pelo card, com "A seguir" logo abaixo.
+• Indicador circular de carregamento animado ao atualizar e ao abrir matérias.
+• Leitor com anel de progresso, tempo restante e teclas em relevo como dica de gestos.
+• Menu, fontes e salvos com moldura própria; a ajuda traz os gestos atuais.
+
 1.0.4 — HUD com veículo em destaque
 
 • Nos óculos, cada notícia mostra o logo e o nome do veículo em negrito acima da manchete.
